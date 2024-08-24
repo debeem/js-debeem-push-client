@@ -36,7 +36,7 @@ export class VaPushClientOptions
 			return `invalid pushClientOptions.serverUrl, invalid format`;
 		}
 
-		if ( ! _.isFunction( pushClientOptions.receiveMessageCallback ) )
+		if ( ! _.isFunction( pushClientOptions.receiveEventCallback ) )
 		{
 			return `invalid pushClientOptions.receiveMessageCallback`;
 		}

@@ -32,7 +32,9 @@
 		"lodash": "^4.17.21",
 		"socket.io-client": "^4.7.2",
 		"uuid": "^9.0.1",
-		"debeem-id": "^1.0.14"
+		"debeem-id": "^1.0.14",
+		"fake-indexeddb": "^5.0.1",
+		"idb": "^7.1.1"
 	},
 	"author": "DeBeem, Team.",
 	"homepage": "https://github.com/debeem/",

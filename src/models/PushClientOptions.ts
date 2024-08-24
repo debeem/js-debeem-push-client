@@ -34,9 +34,9 @@ export interface PushClientOptions
 	serverUrl : string;
 
 	/**
-	 * 	callback function for received message
+	 * 	callback function for receiving event from server
 	 */
-	receiveMessageCallback : ClientReceiveEventCallback
+	receiveEventCallback : ClientReceiveEventCallback
 
 	/**
 	 * 	timeout value of sending request, in milliseconds
