@@ -1,5 +1,8 @@
-import { TsQueuePullOptions } from "debeem-queue";
-
+export interface PullPageOptions
+{
+	pageNo ?: number;
+	pageSize ?: number;
+}
 
 export interface PullRequest
 {
@@ -32,5 +35,5 @@ export interface PullRequest
 	/**
 	 * 	pull options
 	 */
-	options ?: TsQueuePullOptions;
+	options ?: PullPageOptions;
 }

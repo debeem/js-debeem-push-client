@@ -1,4 +1,4 @@
 /**
- * 	define
+ * 	definition
  */
-export type ClientReceiveEventCallback = ( message: any, callback ?: ( ack : any ) => void ) => void;
+export type ClientReceiveEventCallback = ( event : any, callback ?: ( ack : any ) => void ) => void;

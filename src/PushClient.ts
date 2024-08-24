@@ -4,6 +4,11 @@ import { DeviceIdUtil } from "./utils/DeviceIdUtil";
 import { SubscribeRequest } from "./models/requests/SubscribeRequest";
 import { UnsubscribeRequest } from "./models/requests/UnsubscribeRequest";
 import { PublishRequest } from "./models/requests/PublishRequest";
+import { WebsocketConnector } from "./connectors/impls/websocket/WebsocketConnector";
+import { ConnectorMap, IConnector } from "./connectors/IConnector";
+import { ServerUrlUtil } from "./utils/ServerUrlUtil";
+import { PushServerResponse } from "./models/PushServerResponse";
+import { ClientReceiveEventCallback } from "./models/callbacks/ClientReceiveEventCallback";
 
 
 /**
@@ -14,7 +19,14 @@ export class PushClient
 	/**
 	 * 	push client options
 	 */
-	options !: PushClientOptions;
+	options ! : PushClientOptions;
+
+	/**
+	 * 	connectors
+	 */
+	connectorMap !: ConnectorMap;
+	currentConnector !: IConnector;
+
 
 	/**
 	 *	@param options	{PushClientOptions}
@@ -22,72 +34,110 @@ export class PushClient
 	constructor( options : PushClientOptions )
 	{
 		this.options = this.optimizeOptions( options );
+
+		/**
+		 * 	create connectors
+		 */
+		this.connectorMap = {
+			ws : new WebsocketConnector( this.options )
+		};
+		if ( ServerUrlUtil.isWebsocket( this.options.serverUrl ) )
+		{
+			//	use Websocket connector
+			this.currentConnector = this.connectorMap.ws;
+		}
+		if ( ! this.currentConnector )
+		{
+			throw new Error( `empty connector` );
+		}
 	}
 
 
 	/**
 	 * 	publish
+	 *
 	 *	@param publishRequest	{PublishRequest}
-	 *	@returns {Promise<void>}
+	 * 	@returns {Promise<PushServerResponse>}
 	 */
-	public publish( publishRequest : PublishRequest ) : Promise<void>
+	public publish( publishRequest : PublishRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
 			try
 			{
-				//	subscribe
+				const response : PushServerResponse = await this.currentConnector.publish( publishRequest );
+				resolve( response );
 			}
 			catch ( err )
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
 	 * 	start listening
 	 *
 	 * 	@param subscribeRequest		{SubscribeRequest}
-	 * 	@returns {Promise<void>}
+	 * 	@param callback			{ClientReceiveEventCallback}
+	 * 	@returns {Promise<PushServerResponse>}
 	 */
-	public subscribe( subscribeRequest : SubscribeRequest ) : Promise<void>
+	public subscribe( subscribeRequest : SubscribeRequest, callback : ClientReceiveEventCallback ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
 			try
 			{
 				//	subscribe
+				const responseSub : PushServerResponse = await this.currentConnector.subscribe( subscribeRequest );
+				if ( responseSub && 200 === responseSub.status )
+				{
+					this.options.receiveEventCallback = callback;
+
+					//
+					//	todo
+					//	pull events
+					//
+				}
+
+				resolve( responseSub );
 			}
 			catch ( err )
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
 	 * 	stop listening
 	 *
 	 * 	@param unsubscribeRequest	{UnsubscribeRequest}
-	 * 	@returns {Promise<void>}
+	 * 	@returns {Promise<PushServerResponse>}
 	 */
-	public unsubscribe( unsubscribeRequest : UnsubscribeRequest ) : Promise<void>
+	public unsubscribe( unsubscribeRequest : UnsubscribeRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
 			try
 			{
-				//	unsubscribe
+				const response : PushServerResponse = await this.currentConnector.unsubscribe( unsubscribeRequest );
+				resolve( response );
 			}
 			catch ( err )
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 
+	/**
+	 * 	optimize options
+	 *	@param options	{PushClientOptions}
+	 *	@returns {PushClientOptions}
+	 *	@private
+	 */
 	private optimizeOptions( options : PushClientOptions ) : PushClientOptions
 	{
 		const errorOptions : string | null = VaPushClientOptions.validatePushClientOptions( options );

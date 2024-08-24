@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { PushClientOptions } from "../models/PushClientOptions";
+import { ServerUrlUtil } from "../utils/ServerUrlUtil";
 
 
 export class VaPushClientOptions
@@ -27,9 +28,7 @@ export class VaPushClientOptions
 		{
 			return `invalid pushClientOptions.serverUrl`;
 		}
-
-		const regex : RegExp = /^(http:\/\/|https:\/\/|ws:\/\/|wss:\/\/)/;
-		if ( ! regex.test( pushClientOptions.serverUrl ) )
+		if ( ! ServerUrlUtil.isWebsocket( pushClientOptions.serverUrl ) )
 		{
 			//	const socket = io( "https://server-domain.com" );
 			//	const socket = io( "wss://server-domain.com" );
