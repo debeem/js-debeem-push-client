@@ -13,9 +13,6 @@ export const defaultSendingRetry : number = 3;
 
 
 
-/**
- * 	@class
- */
 export interface PushClientOptions
 {
 	/**
@@ -34,11 +31,6 @@ export interface PushClientOptions
 	serverUrl : string;
 
 	/**
-	 * 	callback function for receiving event from server
-	 */
-	receiveEventCallback : ClientReceiveEventCallback
-
-	/**
 	 * 	timeout value of sending request, in milliseconds
 	 * 	default to 2000, defaultSendingTimeout
 	 */
@@ -50,3 +42,13 @@ export interface PushClientOptions
 	 */
 	sendingRetry ?: number;
 }
+
+
+export interface ConnectorOptions extends PushClientOptions
+{
+	/**
+	 * 	callback function for receiving event from server
+	 */
+	receiveEventCallback : ClientReceiveEventCallback
+}
+

@@ -35,11 +35,6 @@ export class VaPushClientOptions
 			return `invalid pushClientOptions.serverUrl, invalid format`;
 		}
 
-		if ( ! _.isFunction( pushClientOptions.receiveEventCallback ) )
-		{
-			return `invalid pushClientOptions.receiveMessageCallback`;
-		}
-
 		if ( undefined !== pushClientOptions.sendingTimeout )
 		{
 			const errorSendingTimeout = this.validatePushClientOptionsSendingTimeout( pushClientOptions.sendingTimeout );

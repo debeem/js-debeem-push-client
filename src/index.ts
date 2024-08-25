@@ -13,6 +13,7 @@ export * from "./models/requests/PullRequest";
 
 export * from "./models/PushServerResponse";
 
+export * from "./models/PaginationOptions";
 export * from "./models/PushClientOptions";
 
 
@@ -28,6 +29,8 @@ export * from "./validators/requests/VaPullRequest";
 export * from "./validators/VaChannel";
 export * from "./validators/VaTimestamp";
 
+export * from "./validators/VaPushServerResponse";
+
 export * from "./validators/VaPushClientOptions";
 
 
@@ -35,6 +38,8 @@ export * from "./validators/VaPushClientOptions";
  * 	utils
  */
 export * from "./utils/DeviceIdUtil";
+export * from "./utils/ServerIdUtil";
+export * from "./utils/ServerUrlUtil";
 
 
 /**

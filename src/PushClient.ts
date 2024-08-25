@@ -9,6 +9,9 @@ import { ConnectorMap, IConnector } from "./connectors/IConnector";
 import { ServerUrlUtil } from "./utils/ServerUrlUtil";
 import { PushServerResponse } from "./models/PushServerResponse";
 import { ClientReceiveEventCallback } from "./models/callbacks/ClientReceiveEventCallback";
+import { defaultEventPoolSize, EventPool } from "./pools/EventPool";
+import { SyncService } from "./services/SyncService";
+import { PullRequest } from "./models/requests/PullRequest";
 
 
 /**
@@ -19,13 +22,23 @@ export class PushClient
 	/**
 	 * 	push client options
 	 */
-	options ! : PushClientOptions;
+	protected options ! : PushClientOptions;
+
+	/**
+	 * 	event pool
+	 */
+	protected eventPool !: EventPool;
+
+	/**
+	 * 	services
+	 */
+	protected syncService !: SyncService;
 
 	/**
 	 * 	connectors
 	 */
-	connectorMap !: ConnectorMap;
-	currentConnector !: IConnector;
+	protected connectorMap !: ConnectorMap;
+	protected currentConnector !: IConnector;
 
 
 	/**
@@ -36,10 +49,25 @@ export class PushClient
 		this.options = this.optimizeOptions( options );
 
 		/**
+		 * 	create event pool
+		 */
+		this.eventPool = new EventPool({
+			maxSize : defaultEventPoolSize,
+		});
+
+		/**
+		 * 	create services
+		 */
+		this.syncService = new SyncService();
+
+		/**
 		 * 	create connectors
 		 */
 		this.connectorMap = {
-			ws : new WebsocketConnector( this.options )
+			ws : new WebsocketConnector({
+				...this.options,
+				receiveEventCallback : this.eventPool.eventReceiver
+			})
 		};
 		if ( ServerUrlUtil.isWebsocket( this.options.serverUrl ) )
 		{
@@ -90,14 +118,32 @@ export class PushClient
 			{
 				//	subscribe
 				const responseSub : PushServerResponse = await this.currentConnector.subscribe( subscribeRequest );
-				if ( responseSub && 200 === responseSub.status )
+				if ( responseSub &&
+					200 === responseSub.status )
 				{
-					this.options.receiveEventCallback = callback;
+					//	...
+					this.eventPool.setCallback( callback );
 
 					//
-					//	todo
-					//	pull events
+					//	pull events from server
 					//
+					const lastOffset : number = await this.eventPool.loadLastOffset();
+					const pullRequest : PullRequest = {
+						timestamp : Date.now(),
+						wallet : subscribeRequest.wallet,
+						deviceId : subscribeRequest.deviceId,
+						channel : subscribeRequest.channel,
+						offset : lastOffset
+					};
+					const pulledEvents : Array<PushServerResponse>
+						= await this.syncService.pullEvents( this.currentConnector, pullRequest );
+					if ( Array.isArray( pulledEvents ) )
+					{
+						for ( const event of pulledEvents )
+						{
+							this.eventPool.addEvent( event );
+						}
+					}
 				}
 
 				resolve( responseSub );

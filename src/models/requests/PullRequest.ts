@@ -1,8 +1,4 @@
-export interface PullPageOptions
-{
-	pageNo ?: number;
-	pageSize ?: number;
-}
+import { PaginationOptions } from "../PaginationOptions";
 
 export interface PullRequest
 {
@@ -35,5 +31,5 @@ export interface PullRequest
 	/**
 	 * 	pull options
 	 */
-	options ?: PullPageOptions;
+	options ?: PaginationOptions;
 }

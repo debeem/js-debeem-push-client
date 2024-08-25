@@ -1,5 +1,5 @@
 import { IConnector } from "../../IConnector";
-import { PushClientOptions } from "../../../models/PushClientOptions";
+import { ConnectorOptions, PushClientOptions } from "../../../models/PushClientOptions";
 import { io as SocketClient, Socket } from "socket.io-client";
 import _ from "lodash";
 import { TestUtil } from "debeem-utils";
@@ -23,7 +23,7 @@ export class WebsocketConnector implements IConnector
 	/**
 	 * 	push client options
 	 */
-	options !: PushClientOptions;
+	options !: ConnectorOptions;
 
 	/**
 	 * 	client socket
@@ -31,9 +31,10 @@ export class WebsocketConnector implements IConnector
 	socket ! : Socket;
 
 
-	constructor( options : PushClientOptions )
+	constructor( options : ConnectorOptions )
 	{
 		//	...
+		this.options = options;
 		this.socket = SocketClient( this.options.serverUrl );
 
 		//	...
