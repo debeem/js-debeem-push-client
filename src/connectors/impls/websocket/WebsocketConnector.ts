@@ -1,5 +1,5 @@
 import { IConnector } from "../../IConnector";
-import { ConnectorOptions, PushClientOptions } from "../../../models/PushClientOptions";
+import { ConnectorOptions } from "../../../models/PushClientOptions";
 import { io as SocketClient, Socket } from "socket.io-client";
 import _ from "lodash";
 import { TestUtil } from "debeem-utils";
