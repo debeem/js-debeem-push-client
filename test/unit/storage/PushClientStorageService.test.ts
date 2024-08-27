@@ -23,11 +23,11 @@ describe( "PushClientStorageService", () =>
 			const preValue = { lastOffset : Date.now() };
 			await pushClientStorageService.put( key, preValue );
 
-			const value : PushClientItem = await pushClientStorageService.get( key );
+			const value : PushClientItem | null = await pushClientStorageService.get( key );
 			//console.log( `value :`, value );
 			//	value : { lastOffset: 1724593251733 }
 			expect( value ).not.toBeNull();
-			expect( value.lastOffset ).toBe( preValue.lastOffset );
+			expect( value && value.lastOffset === preValue.lastOffset ).toBeTruthy();
 		});
 	} );
 } );

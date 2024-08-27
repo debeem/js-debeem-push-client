@@ -6,6 +6,7 @@ import { PushClientStorageService } from "../storages/PushClientStorageService";
 import { VaPublishRequest } from "../validators/requests/VaPublishRequest";
 import { PublishRequest } from "../models/requests/PublishRequest";
 import { PushClientItem, pushClientStorageKey } from "../entities/PushClientEntity";
+import { clearInterval } from "timers";
 
 
 export const defaultEventPoolSize = 1024;
@@ -45,7 +46,7 @@ export class EventPool
 	 */
 	protected pushClientStorageService : PushClientStorageService = new PushClientStorageService();
 	protected lastOffset : number = 0;
-	protected offsetFlusherInterval;
+	protected offsetFlusherInterval : any;
 
 	constructor( options : EventPoolOptions )
 	{
@@ -62,7 +63,7 @@ export class EventPool
 		this.options = options;
 
 		//	create an interval for flushing offset into local database
-		this.offsetFlusherInterval = setInterval( this.threadOffsetFlusher, 5000 );
+		this.startOffsetFlusher();
 	}
 
 	/**
@@ -194,29 +195,60 @@ export class EventPool
 	}
 
 	/**
-	 * 	offset flusher thread
+	 * 	start offset flusher thread
 	 *
-	 * 	@returns {Promise<void>}
 	 *	@protected
 	 */
-	protected threadOffsetFlusher() : Promise<void>
+	protected startOffsetFlusher()
 	{
-		return new Promise( async ( resolve, reject ) =>
+		if ( this.offsetFlusherInterval )
 		{
-			try
-			{
-				const pushClientItem : PushClientItem = {
-					lastOffset : this.lastOffset,
-				};
-				await this.pushClientStorageService.put( pushClientStorageKey, pushClientItem );
+			clearInterval( this.offsetFlusherInterval );
+		}
 
-				//	...
-				resolve();
-			}
-			catch ( err )
+		//	...
+		this.offsetFlusherInterval = setInterval( async () =>
+		{
+			if ( ! this.pushClientStorageService )
 			{
-				reject( err );
+				throw new Error( `${ this.constructor.name }.threadOffsetFlusher :: uninitialized this.pushClientStorageService` );
 			}
-		});
+
+			//	...
+			const pushClientItem : PushClientItem = {
+				lastOffset : this.lastOffset,
+			};
+			await this.pushClientStorageService.put( pushClientStorageKey, pushClientItem );
+			//const readItem : PushClientItem | null = await this.pushClientStorageService.get( pushClientStorageKey );
+			//console.log( `)) flushed lastOffset to local storage, lastOffset in db : `, readItem );
+
+		}, 3000 );
 	}
+	//
+	// protected threadOffsetFlusher() : Promise<void>
+	// {
+	// 	return new Promise( async ( resolve, reject ) =>
+	// 	{
+	// 		try
+	// 		{
+	// 			if ( ! this.pushClientStorageService )
+	// 			{
+	// 				return reject( `${ this.constructor.name }.threadOffsetFlusher :: uninitialized this.pushClientStorageService` );
+	// 			}
+	//
+	// 			//	...
+	// 			const pushClientItem : PushClientItem = {
+	// 				lastOffset : this.lastOffset,
+	// 			};
+	// 			await this.pushClientStorageService.put( pushClientStorageKey, pushClientItem );
+	//
+	// 			//	...
+	// 			resolve();
+	// 		}
+	// 		catch ( err )
+	// 		{
+	// 			reject( err );
+	// 		}
+	// 	});
+	// }
 }
