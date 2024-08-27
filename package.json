@@ -1,6 +1,6 @@
 {
 	"name": "debeem-push-client",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Decentralized Push-Client by DeBeem, Team.",
 	"main": "dist/index.js",
 	"browser": "dist/index.js",

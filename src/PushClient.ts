@@ -66,7 +66,7 @@ export class PushClient
 		this.connectorMap = {
 			ws : new WebsocketConnector({
 				...this.options,
-				receiveEventCallback : this.eventPool.eventReceiver
+				receiveEventCallback : this.eventPool.callbackEventReceiver
 			})
 		};
 		if ( ServerUrlUtil.isWebsocket( this.options.serverUrl ) )

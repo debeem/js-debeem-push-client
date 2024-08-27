@@ -6,7 +6,11 @@ import { ServerIdUtil } from "../utils/ServerIdUtil";
 
 export class VaPushServerResponse
 {
-	static validatePushServerResponse( pushServerResponse : PushServerResponse ) : string | null
+	/**
+	 *	@param pushServerResponse	{PushServerResponse}
+	 *	@returns {string | null}
+	 */
+	static validatePushServerResponse( pushServerResponse : any ) : string | null
 	{
 		if ( ! pushServerResponse )
 		{

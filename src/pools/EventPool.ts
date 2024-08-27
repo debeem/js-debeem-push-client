@@ -62,6 +62,9 @@ export class EventPool
 		//	...
 		this.options = options;
 
+		//	bind pointer `this` to the function callbackEventReceiver for callback
+		this.callbackEventReceiver = this.callbackEventReceiver.bind( this );
+
 		//	create an interval for flushing offset into local database
 		this.startOffsetFlusher();
 	}
@@ -107,9 +110,12 @@ export class EventPool
 	 *	@param callback		{( ack : any ) => void}
 	 *	@returns {void}
 	 */
-	public eventReceiver( event : PushServerResponse, callback ?: ( ack : any ) => void ) : void
+	public callbackEventReceiver( event : PushServerResponse, callback ?: ( ack : any ) => void ) : void
 	{
-		this.addEvent( event );
+		setTimeout( () =>
+		{
+			this.addEvent( event );
+		}, 1 );
 	}
 
 	/**

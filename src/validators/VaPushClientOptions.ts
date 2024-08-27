@@ -5,7 +5,11 @@ import { ServerUrlUtil } from "../utils/ServerUrlUtil";
 
 export class VaPushClientOptions
 {
-	public static validatePushClientOptions( pushClientOptions : PushClientOptions ) : string | null
+	/**
+	 *	@param pushClientOptions	{PushClientOptions}
+	 *	@returns {string | null}
+	 */
+	public static validatePushClientOptions( pushClientOptions : any ) : string | null
 	{
 		if ( ! pushClientOptions )
 		{
