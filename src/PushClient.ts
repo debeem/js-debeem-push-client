@@ -12,6 +12,7 @@ import { ClientReceiveEventCallback } from "./models/callbacks/ClientReceiveEven
 import { defaultEventPoolSize, EventPool } from "./pools/EventPool";
 import { SyncService } from "./services/SyncService";
 import { PullRequest } from "./models/requests/PullRequest";
+import { PushClientItem } from "./entities/PushClientEntity";
 
 
 /**
@@ -27,7 +28,7 @@ export class PushClient
 	/**
 	 * 	event pool
 	 */
-	protected eventPool !: EventPool;
+	public eventPool !: EventPool;
 
 	/**
 	 * 	services
@@ -127,13 +128,13 @@ export class PushClient
 					//
 					//	pull events from server
 					//
-					const lastOffset : number = await this.eventPool.loadLastOffset();
+					const loadedOffset : PushClientItem = await this.eventPool.loadOffset();
 					const pullRequest : PullRequest = {
 						timestamp : Date.now(),
 						wallet : subscribeRequest.wallet,
 						deviceId : subscribeRequest.deviceId,
 						channel : subscribeRequest.channel,
-						offset : lastOffset
+						offset : loadedOffset.maxOffset
 					};
 					const pulledEvents : Array<PushServerResponse>
 						= await this.syncService.pullEvents( this.currentConnector, pullRequest );
@@ -177,6 +178,28 @@ export class PushClient
 		} );
 	}
 
+
+	/**
+	 * 	pull
+	 *
+	 * 	@param pullRequest	{PullRequest}
+	 * 	@returns {Promise<PushServerResponse>}
+	 */
+	public pull( pullRequest : PullRequest ) : Promise<PushServerResponse>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				const response : PushServerResponse = await this.currentConnector.pull( pullRequest );
+				resolve( response );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
 
 	/**
 	 * 	optimize options

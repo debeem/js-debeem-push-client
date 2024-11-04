@@ -13,7 +13,7 @@ export class VaStatusRequest
 			return `invalid statusRequest`;
 		}
 
-		const errorTimestamp : string | null = VaTimestamp.validateTimestamp( statusRequest.timestamp );
+		const errorTimestamp : string | null = VaTimestamp.validateTimestampStrictly( statusRequest.timestamp );
 		if ( null !== errorTimestamp )
 		{
 			return `invalid statusRequest.timestamp, ${ errorTimestamp }`;

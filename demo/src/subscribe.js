@@ -48,7 +48,7 @@ async function subscribe()
 
 	const pushClientOptions = {
 		deviceId : deviceId,
-		serverUrl : `http://localhost:6501`
+		serverUrl : `http://localhost:6511`
 	};
 	const pushClient = new PushClient( pushClientOptions );
 

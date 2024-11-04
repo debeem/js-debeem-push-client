@@ -3,7 +3,7 @@ import _ from "lodash";
 
 export class VaTimestamp
 {
-	static validateTimestamp( timestamp : any ) : string | null
+	static validateTimestampStrictly( timestamp : any ) : string | null
 	{
 		if ( ! _.isNumber( timestamp ) )
 		{

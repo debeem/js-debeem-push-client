@@ -13,7 +13,7 @@ export class VaSubscribeRequest
 			return `invalid subscribeRequest`;
 		}
 
-		const errorTimestamp : string | null = VaTimestamp.validateTimestamp( subscribeRequest.timestamp );
+		const errorTimestamp : string | null = VaTimestamp.validateTimestampStrictly( subscribeRequest.timestamp );
 		if ( null !== errorTimestamp )
 		{
 			return `invalid subscribeRequest.timestamp, ${ errorTimestamp }`;

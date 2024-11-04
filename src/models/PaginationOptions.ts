@@ -19,4 +19,9 @@ export interface PaginationOptions
 	pageNo ?: number;
 	pageSize ?: number;
 	order ?: PaginationOrder;
+
+	/**
+	 * 	exclude start member
+	 */
+	excludeStartMember ?: boolean;
 }

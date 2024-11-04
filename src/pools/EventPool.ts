@@ -45,7 +45,8 @@ export class EventPool
 	 *	@protected
 	 */
 	protected pushClientStorageService : PushClientStorageService = new PushClientStorageService();
-	protected lastOffset : number = 0;
+	protected minOffset : number = Number.MAX_VALUE;
+	protected maxOffset : number = 0;
 	protected offsetFlusherInterval : any;
 
 	constructor( options : EventPoolOptions )
@@ -133,7 +134,7 @@ export class EventPool
 		}
 
 		const publishRequest : PublishRequest = event.data;
-		if ( null !== VaPublishRequest.validateVaPublishRequest( publishRequest ) )
+		if ( null !== VaPublishRequest.validatePublishRequest( publishRequest, true ) )
 		{
 			console.warn( `${ this.constructor.name }.addEvent :: invalid event.data :`, publishRequest );
 			return;
@@ -157,41 +158,55 @@ export class EventPool
 		this.receivedEvents.sort( ( a : PushServerResponse, b : PushServerResponse ) => a.timestamp! - b.timestamp! );
 
 		//	update the lastOffset
-		if ( publishRequest.timestamp > this.lastOffset )
+		if ( publishRequest.timestamp > this.maxOffset )
 		{
-			this.lastOffset = publishRequest.timestamp;
+			this.maxOffset = publishRequest.timestamp;
+		}
+		if ( publishRequest.timestamp < this.minOffset )
+		{
+			this.minOffset = publishRequest.timestamp;
 		}
 	}
 
 	/**
-	 * 	get lastOffset
-	 * 	@returns { number }
+	 * 	get earliest/min offset
+	 *	@returns { number }
 	 */
-	public getLastOffset() : number
+	public getMinOffset() : number
 	{
-		return this.lastOffset;
+		return this.minOffset;
 	}
 
 	/**
-	 * 	load lastOffset from local database
+	 * 	get latest/max Offset
+	 * 	@returns { number }
+	 */
+	public getMaxOffset() : number
+	{
+		return this.maxOffset;
+	}
+
+	/**
+	 * 	load lastOffset/maxOffset from local database
 	 * 	@returns {Promise< number >}
 	 */
-	public loadLastOffset() : Promise< number >
+	public loadOffset() : Promise< PushClientItem >
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
 			try
 			{
 				const pushClientItem : PushClientItem | null = await this.pushClientStorageService.get( pushClientStorageKey );
-				if ( pushClientItem &&
-					_.isNumber( pushClientItem.lastOffset ) &&
-					pushClientItem.lastOffset > 0 )
+				if ( ! pushClientItem )
 				{
-					return resolve( pushClientItem.lastOffset );
+					return resolve( {
+						minOffset : 0,
+						maxOffset : 0,
+					});
 				}
 
 				//	...
-				resolve( 0 );
+				resolve( pushClientItem );
 			}
 			catch ( err )
 			{
@@ -222,7 +237,8 @@ export class EventPool
 
 			//	...
 			const pushClientItem : PushClientItem = {
-				lastOffset : this.lastOffset,
+				minOffset : this.minOffset,
+				maxOffset : this.maxOffset,
 			};
 			await this.pushClientStorageService.put( pushClientStorageKey, pushClientItem );
 			//const readItem : PushClientItem | null = await this.pushClientStorageService.get( pushClientStorageKey );

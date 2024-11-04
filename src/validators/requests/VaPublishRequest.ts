@@ -6,7 +6,12 @@ import { VaChannel } from "../VaChannel";
 
 export class VaPublishRequest
 {
-	static validateVaPublishRequest( publishRequest : any ) : string | null
+	/**
+	 *	@param publishRequest			{any}
+	 *	@param [simpleTimestampValidation]	{boolean}
+	 *	@returns {string | null}
+	 */
+	static validatePublishRequest( publishRequest : any, simpleTimestampValidation : boolean = false ) : string | null
 	{
 		if ( ! publishRequest )
 		{
@@ -21,10 +26,24 @@ export class VaPublishRequest
 			}
 		}
 
-		const errorTimestamp : string | null = VaTimestamp.validateTimestamp( publishRequest.timestamp );
-		if ( null !== errorTimestamp )
+		if ( ! simpleTimestampValidation )
 		{
-			return errorTimestamp;
+			const errorTimestamp : string | null = VaTimestamp.validateTimestampStrictly( publishRequest.timestamp );
+			if ( null !== errorTimestamp )
+			{
+				return errorTimestamp;
+			}
+		}
+		else
+		{
+			if ( ! _.isNumber( publishRequest.timestamp ) )
+			{
+				return `invalid publishRequest.timestamp`;
+			}
+			if ( publishRequest.timestamp <= 0 )
+			{
+				return `invalid publishRequest.timestamp, too young`;
+			}
 		}
 
 		if ( ! EtherWallet.isValidAddress( publishRequest.wallet ) )

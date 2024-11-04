@@ -1,6 +1,5 @@
 import _ from "lodash";
-import { EtherWallet, Web3Signer } from "debeem-id";
-import { Web3Digester } from "debeem-id";
+import { EtherWallet } from "debeem-id";
 import { VaChannel } from "../VaChannel";
 import { VaTimestamp } from "../VaTimestamp";
 
@@ -14,7 +13,7 @@ export class VaPullRequest
 			return `invalid pullRequest`;
 		}
 
-		const errorTimestamp : string | null = VaTimestamp.validateTimestamp( pullRequest.timestamp );
+		const errorTimestamp : string | null = VaTimestamp.validateTimestampStrictly( pullRequest.timestamp );
 		if ( null !== errorTimestamp )
 		{
 			return `invalid pullRequest.timestamp, ${ errorTimestamp }`;

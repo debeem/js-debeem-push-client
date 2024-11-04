@@ -12,7 +12,8 @@ export const pushClientStorageKey : string = `push_client_storage_key`;
  */
 export interface PushClientItem
 {
-	lastOffset : number;
+	minOffset : number;
+	maxOffset : number;
 }
 
 /**

@@ -77,14 +77,18 @@ export class PushClientStorageService extends AbstractStorageService<PushClientI
 	 */
 	public validateValidItem( item : any ) : string | null
 	{
-		if ( ! item )
+		if ( ! _.isObject( item ) )
 		{
 			return `invalid item`;
 		}
-		if ( ! _.isNumber( item.lastOffset ) )
-		{
-			return `invalid item.lastOffset`;
-		}
+		// if ( ! _.isNumber( item.minOffset ) )
+		// {
+		// 	return `invalid item.minOffset`;
+		// }
+		// if ( ! _.isNumber( item.maxOffset ) )
+		// {
+		// 	return `invalid item.maxOffset`;
+		// }
 
 		return null;
 	}

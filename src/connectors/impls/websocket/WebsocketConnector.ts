@@ -13,6 +13,7 @@ import { VaPublishRequest } from "../../../validators/requests/VaPublishRequest"
 import { VaSubscribeRequest } from "../../../validators/requests/VaSubscribeRequest";
 import { VaUnsubscribeRequest } from "../../../validators/requests/VaUnsubscribeRequest";
 import { VaStatusRequest } from "../../../validators/requests/VaStatusRequest";
+import { VaPullRequest } from "../../../validators/requests/VaPullRequest";
 
 
 /**
@@ -54,11 +55,11 @@ export class WebsocketConnector implements IConnector
 		this.socket.on( `connect`, () =>
 		{
 			//	x8WIv7-mJelg7on_ALbx
-			console.log( `connected to server, socket.id :`, this.socket.id );
+			console.log( `${ this.constructor.name }.setupEvents on[connect] :: connected to server, socket.id :`, this.socket.id );
 		} );
 		this.socket.on( `connect_error`, () =>
 		{
-			console.log( `connect error, will reconnect later ...` )
+			console.log( `${ this.constructor.name }.setupEvents on[connect_error] :: connect error, will reconnect later ...` )
 			setTimeout( () =>
 			{
 				this.socket.connect();
@@ -66,7 +67,7 @@ export class WebsocketConnector implements IConnector
 		} );
 		this.socket.on( `disconnect`, ( reason ) =>
 		{
-			console.log( `disconnected from server, socket.id :`, this.socket.id );
+			console.log( `${ this.constructor.name }.setupEvents on[disconnect] :: disconnected from server, socket.id :`, this.socket.id );
 			if ( `io server disconnect` === reason )
 			{
 				//	the disconnection was initiated by the server, you need to reconnect manually
@@ -85,36 +86,36 @@ export class WebsocketConnector implements IConnector
 
 		this.socket.on( `publish`, ( response : PushServerResponse ) =>
 		{
-			console.log( `Client :: received a publish response:`, response );
+			console.log( `${ this.constructor.name }.setupEvents on[publish] :: Client :: received a publish response:`, response );
 		} );
 		this.socket.on( `subscribe`, ( response : PushServerResponse ) =>
 		{
-			console.log( `Client :: received subscribe response:`, response );
+			console.log( `${ this.constructor.name }.setupEvents on[subscribe] :: Client :: received subscribe response:`, response );
 		} );
 		this.socket.on( `unsubscribe`, ( response : PushServerResponse ) =>
 		{
-			console.log( `Client :: received unsubscribe response:`, response );
+			console.log( `${ this.constructor.name }.setupEvents on[unsubscribe] :: Client :: received unsubscribe response:`, response );
 		} );
 		this.socket.on( `status`, ( response : PushServerResponse ) =>
 		{
-			console.log( `Client :: received status response:`, response );
+			console.log( `${ this.constructor.name }.setupEvents on[status] :: Client :: received status response:`, response );
 		} );
 		this.socket.on( `pull`, ( response : PushServerResponse ) =>
 		{
-			console.log( `Client :: received pull response:`, response );
+			console.log( `${ this.constructor.name }.setupEvents on[pull] :: Client :: received pull response:`, response );
 		} );
 		this.socket.on( `event`, ( response : PushServerResponse, ackCallback : ( ack : any ) => void ) =>
 		{
-			console.log( `received event: `, response );
-			console.log( `received event: ackCallback :`, ackCallback );
-			console.log( `received event: ackCallback is function: `, _.isFunction( ackCallback ) );
+			console.log( `${ this.constructor.name }.setupEvents on[event] :: received event: `, response );
+			console.log( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback :`, ackCallback );
+			console.log( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback is function: `, _.isFunction( ackCallback ) );
 
 			if ( _.isFunction( this.options.receiveEventCallback ) )
 			{
 				//	.payload.body is encrypted string
 				this.options.receiveEventCallback( response, ( ack : any ) =>
 				{
-					console.log( `receiveEventCallback ack:`, ack );
+					console.log( `${ this.constructor.name }.setupEvents on[event] :: receiveEventCallback ack:`, ack );
 				} );
 			}
 
@@ -123,14 +124,14 @@ export class WebsocketConnector implements IConnector
 			//
 			if ( _.isFunction( ackCallback ) )
 			{
-				console.log( `received event: will call callback` );
+				console.log( `${ this.constructor.name }.setupEvents on[event] :: received event: will call callback` );
 				ackCallback( {
 					status : `ok`
 				} );
 			}
 			else
 			{
-				console.log( `received event: callback is not a function` );
+				console.log( `${ this.constructor.name }.setupEvents on[event] :: received event: callback is not a function` );
 			}
 		} );
 	}
@@ -146,7 +147,7 @@ export class WebsocketConnector implements IConnector
 		{
 			try
 			{
-				const error : string | null = VaPublishRequest.validateVaPublishRequest( publishRequest );
+				const error : string | null = VaPublishRequest.validatePublishRequest( publishRequest );
 				if ( null !== error )
 				{
 					return reject( error );
@@ -258,7 +259,15 @@ export class WebsocketConnector implements IConnector
 		{
 			try
 			{
-				resolve({});
+				const error : string | null = VaPullRequest.validatePullRequest( pullRequest );
+				if ( null !== error )
+				{
+					return reject( error );
+				}
+
+				//	...
+				const response : PushServerResponse = await this.send( `pull`, pullRequest );
+				resolve( response );
 			}
 			catch ( err )
 			{

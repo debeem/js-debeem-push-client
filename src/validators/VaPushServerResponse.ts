@@ -19,10 +19,13 @@ export class VaPushServerResponse
 
 		if ( undefined !== pushServerResponse.timestamp )
 		{
-			const errorTimestamp : string | null = VaTimestamp.validateTimestamp( pushServerResponse.timestamp );
-			if ( null !== errorTimestamp )
+			if ( ! _.isNumber( pushServerResponse.timestamp ) )
 			{
-				return errorTimestamp;
+				return `invalid pushServerResponse.timestamp`;
+			}
+			if ( pushServerResponse.timestamp <= 0 )
+			{
+				return `invalid pushServerResponse.timestamp, too young`;
 			}
 		}
 		if ( undefined !== pushServerResponse.serverId )
