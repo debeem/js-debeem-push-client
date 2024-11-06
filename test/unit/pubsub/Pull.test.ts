@@ -81,6 +81,7 @@ describe( "Pull", () =>
 				let publishRequest : PublishRequest = {
 					timestamp : new Date().getTime(),
 					wallet : testWalletObjList.alice.address,
+					deviceId : ``,
 					channel : channel,
 					hash : ``,
 					sig : ``,

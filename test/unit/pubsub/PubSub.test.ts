@@ -1,5 +1,5 @@
-import { describe, expect } from '@jest/globals';
-import { PushClient, VaPushServerResponse } from "../../../src";
+import { describe } from '@jest/globals';
+import { PublishRequest, PushClient, VaPushServerResponse } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { TestUtil } from "debeem-utils";
 import { testWalletObjList } from "../../../src/configs/TestConfig";
@@ -90,9 +90,10 @@ describe( "PubSub", () =>
 			//
 			//	Alice publish some events to the channel
 			//
-			let publishRequest = {
+			let publishRequest : PublishRequest = {
 				timestamp : new Date().getTime(),
 				wallet : testWalletObjList.alice.address,
+				deviceId : ``,
 				channel : channel,
 				hash : ``,
 				sig : ``,
