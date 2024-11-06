@@ -42,7 +42,7 @@ export class SyncService
 					return reject( `${ this.constructor.name }.pullEvents :: invalid pullRequest` );
 				}
 
-				let maxLoop : number = 100;
+				let maxLoop : number = 1000;
 				let pulledEvents : Array<PushServerResponse> = [];
 				while( true )
 				{
@@ -118,7 +118,7 @@ export class SyncService
 
 					//	apply the next request
 					pullRequest.offset = pageKey;
-					await TestUtil.sleep( 100 );
+					await TestUtil.sleep( 60 );
 				}
 
 				//	...
