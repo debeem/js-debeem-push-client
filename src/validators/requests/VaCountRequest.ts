@@ -19,48 +19,61 @@ export class VaCountRequest
 			return `invalid countRequest`;
 		}
 
-		const errorTimestamp : string | null = VaTimestamp.validateTimestampStrictly( countRequest.timestamp );
-		if ( null !== errorTimestamp )
+		if ( ! Array.isArray( countRequest.options ) )
 		{
-			return `invalid countRequest.timestamp, ${ errorTimestamp }`;
+			return `invalid countRequest.options`;
+		}
+		if ( 0 === countRequest.options.length )
+		{
+			return `invalid countRequest.options :: empty list`;
 		}
 
-		if ( ! EtherWallet.isValidAddress( countRequest.wallet ) )
+		for ( let i = 0; i < countRequest.options.length; i ++ )
 		{
-			return `invalid countRequest.wallet`;
-		}
-		if ( ! _.isString( countRequest.deviceId ) )
-		{
-			return `invalid countRequest.deviceId`;
-		}
-
-		const errorChannel : string | null = VaChannel.validateChannel( countRequest.channel );
-		if ( null !== errorChannel )
-		{
-			return `invalid countRequest.channel :: ${ errorChannel }`;
-		}
-
-		if ( undefined !== countRequest.startTimestamp )
-		{
-			if ( ! _.isNumber( countRequest.startTimestamp ) )
+			const option = countRequest.options[ i ];
+			const errorTimestamp : string | null = VaTimestamp.validateTimestampStrictly( option.timestamp );
+			if ( null !== errorTimestamp )
 			{
-				return `invalid countRequest.startTimestamp`;
+				return `invalid countRequest.options[ ${ i } ].timestamp, ${ errorTimestamp }`;
 			}
-		}
 
-		if ( undefined !== countRequest.endTimestamp )
-		{
-			if ( ! _.isNumber( countRequest.endTimestamp ) )
+			if ( ! EtherWallet.isValidAddress( option.wallet ) )
 			{
-				return `invalid countRequest.endTimestamp`;
+				return `invalid countRequest.options[ ${ i } ].wallet`;
 			}
-		}
-
-		if ( undefined !== countRequest.lastElement )
-		{
-			if ( ! _.isNumber( countRequest.lastElement ) )
+			if ( ! _.isString( option.deviceId ) )
 			{
-				return `invalid countRequest.lastElement`;
+				return `invalid countRequest.options[ ${ i } ].deviceId`;
+			}
+
+			const errorChannel : string | null = VaChannel.validateChannel( option.channel );
+			if ( null !== errorChannel )
+			{
+				return `invalid countRequest.options[ ${ i } ].channel :: ${ errorChannel }`;
+			}
+
+			if ( undefined !== option.startTimestamp )
+			{
+				if ( ! _.isNumber( option.startTimestamp ) )
+				{
+					return `invalid countRequest.options[ ${ i } ].startTimestamp`;
+				}
+			}
+
+			if ( undefined !== option.endTimestamp )
+			{
+				if ( ! _.isNumber( option.endTimestamp ) )
+				{
+					return `invalid countRequest.options[ ${ i } ].endTimestamp`;
+				}
+			}
+
+			if ( undefined !== option.lastElement )
+			{
+				if ( ! _.isNumber( option.lastElement ) )
+				{
+					return `invalid countRequest.options[ ${ i } ].lastElement`;
+				}
 			}
 		}
 
