@@ -7,6 +7,7 @@ import { VaPublishRequest } from "../validators/requests/VaPublishRequest";
 import { PublishRequest } from "../models/requests/PublishRequest";
 import { PushClientItem, pushClientStorageKey } from "../entities/PushClientEntity";
 import { clearInterval } from "timers";
+import { Logger, LoggerUtil } from "../utils/LoggerUtil";
 
 
 export const defaultEventPoolSize = 1024;
@@ -48,6 +49,12 @@ export class EventPool
 	protected minOffset : number = Number.MAX_VALUE;
 	protected maxOffset : number = 0;
 	protected offsetFlusherInterval : any;
+
+	/**
+	 * 	log
+	 */
+	log : Logger = new LoggerUtil().logger;
+
 
 	constructor( options : EventPoolOptions )
 	{
@@ -129,14 +136,14 @@ export class EventPool
 	{
 		if ( null !== VaPushServerResponse.validatePushServerResponse( event ) )
 		{
-			console.warn( `${ this.constructor.name }.addEvent :: invalid event :`, event );
+			this.log.warn( `${ this.constructor.name }.addEvent :: invalid event :`, event );
 			return;
 		}
 
 		const publishRequest : PublishRequest = event.data;
 		if ( null !== VaPublishRequest.validatePublishRequest( publishRequest, true ) )
 		{
-			console.warn( `${ this.constructor.name }.addEvent :: invalid event.data :`, publishRequest );
+			this.log.warn( `${ this.constructor.name }.addEvent :: invalid event.data :`, publishRequest );
 			return;
 		}
 

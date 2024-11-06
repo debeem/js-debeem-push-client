@@ -4,6 +4,8 @@ import { PullRequest } from "../models/requests/PullRequest";
 import { PushServerResponse } from "../models/PushServerResponse";
 import { EtherWallet, Web3Signer, Web3Validator } from "debeem-id";
 import { VaPullRequest } from "../validators/requests/VaPullRequest";
+import { TestUtil } from "debeem-utils";
+import { Logger, LoggerUtil } from "../utils/LoggerUtil";
 
 
 /**
@@ -11,6 +13,13 @@ import { VaPullRequest } from "../validators/requests/VaPullRequest";
  */
 export class SyncService
 {
+	/**
+	 * 	log
+	 */
+	log : Logger = new LoggerUtil().logger;
+
+
+
 	/**
 	 * 	pull events from server
 	 *
@@ -47,14 +56,14 @@ export class SyncService
 					const result : any = pullResponse?.data?.result;
 					if ( ! result )
 					{
-						console.warn( `${ this.constructor.name }.pullEvents :: null pull result` );
+						this.log.warn( `${ this.constructor.name }.pullEvents :: null pull result` );
 						continue;
 					}
 					if ( ! _.isNumber( result.total ) ||
 						! _.isNumber( result.pageKey ) ||
 						! Array.isArray( result.list ) )
 					{
-						console.warn( `${ this.constructor.name }.pullEvents :: invalid result format : `, result );
+						this.log.warn( `${ this.constructor.name }.pullEvents :: invalid result format : `, result );
 						continue;
 					}
 
@@ -103,12 +112,13 @@ export class SyncService
 					const pageKey = result.pageKey;
 					if ( ! pageKey || 0 === pageKey )
 					{
-						console.log( `${ this.constructor.name }.pullEvents :: 🦄 pageKey === 0, stop pulling from server` );
+						this.log.debug( `${ this.constructor.name }.pullEvents :: 🦄 pageKey === 0, stop pulling from server` );
 						break;
 					}
 
 					//	apply the next request
 					pullRequest.offset = pageKey;
+					await TestUtil.sleep( 100 );
 				}
 
 				//	...
