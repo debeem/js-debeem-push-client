@@ -27,7 +27,7 @@ describe( "Pull", () =>
 
 	describe( "Pull", () =>
 	{
-		it( "should subscribe a channel", async () =>
+		it( "should subscribe to a channel and pull message with custom sorting of ASC/DESC", async () =>
 		{
 			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
 			const channel : string = `pch-bobo-${ testWalletObjList.bob.address }`;
