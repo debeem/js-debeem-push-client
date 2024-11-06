@@ -1,24 +1,12 @@
-export interface PublishRequest
+import { BaseRequest } from "../BaseRequest";
+
+
+export interface PublishRequest extends BaseRequest
 {
 	/**
 	 * 	type
 	 */
 	type ?: string;
-
-	/**
-	 * 	timestamp on device
-	 */
-	timestamp : number;
-
-	/**
-	 * 	publisher's wallet / account
-	 */
-	wallet : string;
-
-	/**
-	 * 	the channel that a user subscribes to
-	 */
-	channel : string;
 
 	/**
 	 * 	hash value
