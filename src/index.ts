@@ -5,11 +5,13 @@ export * from "./models/callbacks/ClientReceiveEventCallback";
 export * from "./models/callbacks/ResponseCallback";
 export * from "./models/callbacks/ServerSendEventCallback";
 
+export * from "./models/BaseRequest";
 export * from "./models/requests/PublishRequest";
 export * from "./models/requests/SubscribeRequest";
 export * from "./models/requests/UnsubscribeRequest";
 export * from "./models/requests/StatusRequest";
 export * from "./models/requests/PullRequest";
+export * from "./models/requests/CountRequest";
 
 export * from "./models/PushServerResponse";
 
