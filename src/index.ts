@@ -25,6 +25,7 @@ export * from "./validators/requests/VaSubscribeRequest";
 export * from "./validators/requests/VaUnsubscribeRequest";
 export * from "./validators/requests/VaStatusRequest";
 export * from "./validators/requests/VaPullRequest";
+export * from "./validators/requests/VaCountRequest";
 
 export * from "./validators/VaChannel";
 export * from "./validators/VaTimestamp";
