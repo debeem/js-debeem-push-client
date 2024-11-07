@@ -15,6 +15,8 @@ import { VaUnsubscribeRequest } from "../../../validators/requests/VaUnsubscribe
 import { VaStatusRequest } from "../../../validators/requests/VaStatusRequest";
 import { VaPullRequest } from "../../../validators/requests/VaPullRequest";
 import { LoggerUtil, Logger } from "../../../utils/LoggerUtil";
+import { CountRequest } from "../../../models/requests/CountRequest";
+import { VaCountRequest } from "../../../validators/requests/VaCountRequest";
 
 
 /**
@@ -109,6 +111,10 @@ export class WebsocketConnector implements IConnector
 		this.socket.on( `pull`, ( response : PushServerResponse ) =>
 		{
 			this.log.debug( `${ this.constructor.name }.setupEvents on[pull] :: Client :: received pull response:`, response );
+		} );
+		this.socket.on( `count`, ( response : PushServerResponse ) =>
+		{
+			this.log.debug( `${ this.constructor.name }.setupEvents on[count] :: Client :: received count response:`, response );
 		} );
 		this.socket.on( `event`, ( response : PushServerResponse, ackCallback : ( ack : any ) => void ) =>
 		{
@@ -273,6 +279,34 @@ export class WebsocketConnector implements IConnector
 
 				//	...
 				const response : PushServerResponse = await this.send( `pull`, pullRequest );
+				resolve( response );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		});
+	}
+
+	/**
+	 * 	@implements
+	 *	@param countRequest	{CountRequest}
+	 *	@returns {Promise< PushServerResponse >}
+	 */
+	public count( countRequest : CountRequest ) : Promise< PushServerResponse >
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				const error : string | null = VaCountRequest.validateCountRequest( countRequest );
+				if ( null !== error )
+				{
+					return reject( error );
+				}
+
+				//	...
+				const response : PushServerResponse = await this.send( `count`, countRequest );
 				resolve( response );
 			}
 			catch ( err )

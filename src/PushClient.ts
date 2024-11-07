@@ -13,6 +13,7 @@ import { defaultEventPoolSize, EventPool } from "./pools/EventPool";
 import { SyncService } from "./services/SyncService";
 import { PullRequest } from "./models/requests/PullRequest";
 import { PushClientItem } from "./entities/PushClientEntity";
+import { CountRequest } from "./models/requests/CountRequest";
 
 
 /**
@@ -178,7 +179,6 @@ export class PushClient
 		} );
 	}
 
-
 	/**
 	 * 	pull
 	 *
@@ -192,6 +192,28 @@ export class PushClient
 			try
 			{
 				const response : PushServerResponse = await this.currentConnector.pull( pullRequest );
+				resolve( response );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
+	 * 	count
+	 *
+	 * 	@param countRequest	{CountRequest}
+	 * 	@returns {Promise<PushServerResponse>}
+	 */
+	public count( countRequest : CountRequest ) : Promise<PushServerResponse>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				const response : PushServerResponse = await this.currentConnector.count( countRequest );
 				resolve( response );
 			}
 			catch ( err )
