@@ -68,11 +68,12 @@ describe( "Count", () =>
 
 
 			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
-			const channel : string = `pch-bobo-${ testWalletObjList.bob.address }`;
+			const channel : string = `pch-metabeem-store-${ testWalletObjList.bob.address }`;
 
 			const pushClientOptions = {
 				deviceId : deviceId,
-				serverUrl : `http://localhost:6501`
+				//serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
 
@@ -100,9 +101,36 @@ describe( "Count", () =>
 					sig : ``,
 					body : {
 						index : i,
-						time : new Date().toLocaleString()
+						time : new Date().toLocaleString(),
+						"postHash": "0xf9f3f8687a8a0eaf77827ea007270c6987f9d563fdbf7cb80d8f51f141e8d691",
+						"timestamp": 1731291629673,
+						"hash": "0xc04ce18f621a912b27124865a227edf5f9fae5de06e89ebafc534d6f0132ddb6",
+						"version": "1.0.0",
+						"deleted": "000000000000000000000000",
+						"wallet": "0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8",
+						"sig": "0x03b411ec8b19723e9b86712bd5863b88c35e9f8bed8700f0a850ee4fffad95e5135e1474594a90745c99b93872d0f09044e895e0f10a46317d41b4998735b85e1c",
+						"authorName": "Bob",
+						"authorAvatar": "https://avatars.githubusercontent.com/u/142800322?v=4",
+						"replyTo": "Alice",
+						"replyToWallet": "0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357",
+						"postSnippet": "post name abc",
+						"body": "Hello 1",
+						"pictures": [],
+						"videos": [],
+						"bitcoinPrice": 26888,
+						"statisticView": 0,
+						"statisticRepost": 0,
+						"statisticQuote": 0,
+						"statisticLike": 0,
+						"statisticFavorite": 0,
+						"statisticReply": 0,
+						"remark": "no ...",
+						"createdAt": "2024-11-11T02:20:29.673Z",
+						"updatedAt": "2024-11-11T02:20:29.673Z"
 					}
+
 				};
+				console.log( `🎾 will publish an event to server: ${ pushClientOptions.serverUrl } :`, publishRequest );
 				publishRequest.sig = await Web3Signer.signObject( testWalletObjList.alice.privateKey, publishRequest );
 				publishRequest.hash = await Web3Digester.hashObject( publishRequest );
 				const response : PushServerResponse = await pushClient.publish( publishRequest );
@@ -149,7 +177,7 @@ describe( "Count", () =>
 			};
 			const countResponse1 : PushServerResponse = await pushClient.count( countRequest1 );
 			//console.log( `countResponse1 :`, countResponse1 );
-			//console.log( `countResponse1.data :`, countResponse1.data );
+			console.log( `countResponse1.data :`, countResponse1.data );
 			//	    countResponse1.data : {
 			//       resultList: [
 			//         {
@@ -216,7 +244,7 @@ describe( "Count", () =>
 				]
 			};
 			const countResponse2 : PushServerResponse = await pushClient.count( countRequest2 );
-			//console.log( `countResponse2 :`, countResponse2 );
+			console.log( `countResponse2 :`, countResponse2 );
 			//	    countResponse2.data : {
 			//       resultList: [
 			//         {

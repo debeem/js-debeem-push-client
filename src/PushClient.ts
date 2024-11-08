@@ -14,6 +14,7 @@ import { SyncService } from "./services/SyncService";
 import { PullRequest } from "./models/requests/PullRequest";
 import { PushClientItem } from "./entities/PushClientEntity";
 import { CountRequest } from "./models/requests/CountRequest";
+import _ from "lodash";
 
 
 /**
@@ -127,15 +128,28 @@ export class PushClient
 					this.eventPool.setCallback( callback );
 
 					//
+					//	todo
+					//	add channel for loadOffset
+					//
+
+					//	load maxOffset/maxTimestamp
+					const loadedOffset : PushClientItem = await this.eventPool.loadOffset();
+					let pullOffset = loadedOffset.maxOffset;
+					if ( _.isNumber( subscribeRequest.offset ) &&
+						subscribeRequest.offset > pullOffset )
+					{
+						pullOffset = subscribeRequest.offset;
+					}
+
+					//
 					//	pull events from server
 					//
-					const loadedOffset : PushClientItem = await this.eventPool.loadOffset();
 					const pullRequest : PullRequest = {
 						timestamp : Date.now(),
 						wallet : subscribeRequest.wallet,
 						deviceId : subscribeRequest.deviceId,
 						channel : subscribeRequest.channel,
-						offset : loadedOffset.maxOffset
+						offset : pullOffset			//	startTimestamp
 					};
 					const pulledEvents : Array<PushServerResponse>
 						= await this.syncService.pullEvents( this.currentConnector, pullRequest );
