@@ -72,7 +72,8 @@ describe( "Count", () =>
 
 			const pushClientOptions = {
 				deviceId : deviceId,
-				serverUrl : `http://localhost:6501`
+				//serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
 
@@ -149,7 +150,7 @@ describe( "Count", () =>
 			};
 			const countResponse1 : PushServerResponse = await pushClient.count( countRequest1 );
 			//console.log( `countResponse1 :`, countResponse1 );
-			//console.log( `countResponse1.data :`, countResponse1.data );
+			console.log( `countResponse1.data :`, countResponse1.data );
 			//	    countResponse1.data : {
 			//       resultList: [
 			//         {
@@ -216,7 +217,7 @@ describe( "Count", () =>
 				]
 			};
 			const countResponse2 : PushServerResponse = await pushClient.count( countRequest2 );
-			//console.log( `countResponse2 :`, countResponse2 );
+			console.log( `countResponse2 :`, countResponse2 );
 			//	    countResponse2.data : {
 			//       resultList: [
 			//         {
