@@ -1,13 +1,8 @@
 import { describe, expect } from '@jest/globals';
 import {
-	CountRequest,
-	PaginationOrder,
 	PublishRequest,
-	PullRequest,
 	PushClient,
-	PushServerResponse,
-	SubscribeRequest,
-	VaPushServerResponse
+	PushServerResponse
 } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { TestUtil } from "debeem-utils";

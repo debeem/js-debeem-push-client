@@ -1,9 +1,7 @@
 import { describe, expect } from '@jest/globals';
 import {
 	CountRequest,
-	PaginationOrder,
 	PublishRequest,
-	PullRequest,
 	PushClient,
 	PushServerResponse,
 	SubscribeRequest,
