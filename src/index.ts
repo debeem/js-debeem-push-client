@@ -1,9 +1,8 @@
 /**
  * 	models
  */
-export * from "./models/callbacks/ClientReceiveEventCallback";
-export * from "./models/callbacks/ResponseCallback";
-export * from "./models/callbacks/ServerSendEventCallback";
+export * from "./models/callbacks/ServerEventReceiver";
+export * from "./models/callbacks/ClientEventReceiver";
 
 export * from "./models/BaseRequest";
 export * from "./models/requests/PublishRequest";

@@ -13,7 +13,7 @@ import _ from "lodash";
 /**
  *	unit test
  */
-describe( "Count", () =>
+describe( "Auth", () =>
 {
 	beforeAll( async () =>
 	{
@@ -27,15 +27,14 @@ describe( "Count", () =>
 		const deviceId : string = `device-${ testWalletObjList.bob.address }`;
 		const channel : string = `pch-bobo-${ testWalletObjList.bob.address }`;
 
-		const pushClientOptions = {
-			deviceId : deviceId,
-			//serverUrl : `http://localhost:6501`
-			serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
-		};
-		const pushClient = new PushClient( pushClientOptions );
-
 		it( "should publish an event", async () =>
 		{
+			const pushClientOptions = {
+				deviceId : deviceId,
+				//serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
 
 			//	...
 			let publishRequest : PublishRequest = {
@@ -63,12 +62,22 @@ describe( "Count", () =>
 			expect( response.status ).toBe( 200 );
 			await TestUtil.sleep( 10 );
 
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
+
 		}, 60 * 10e3 );
 
 		it( "should return `access denied`", async () =>
 		{
 			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
 			const channel : string = `pch-bobo-${ testWalletObjList.bob.address }`;
+
+			const pushClientOptions = {
+				deviceId : deviceId,
+				//serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
 
 			//	...
 			let publishRequest : PublishRequest = {
@@ -97,12 +106,22 @@ describe( "Count", () =>
 			expect( response.error ).toBe( `PublishAuth.auth :: access denied` );
 			await TestUtil.sleep( 10 );
 
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
+
 		}, 60 * 10e3 );
 
 		it( "should throw `invalid publishRequest.sig`", async () =>
 		{
 			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
 			const channel : string = `pch-bobo-${ testWalletObjList.bob.address }`;
+
+			const pushClientOptions = {
+				deviceId : deviceId,
+				//serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
 
 			//	...
 			let publishRequest : PublishRequest = {
@@ -132,6 +151,9 @@ describe( "Count", () =>
 			}
 
 			await TestUtil.sleep( 10 );
+
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
 
 		}, 60 * 10e3 );
 

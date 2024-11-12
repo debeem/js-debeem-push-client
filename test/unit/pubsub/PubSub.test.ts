@@ -1,8 +1,9 @@
-import { describe } from '@jest/globals';
+import { describe, expect } from '@jest/globals';
 import { PublishRequest, PushClient, VaPushServerResponse } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { TestUtil } from "debeem-utils";
 import { testWalletObjList } from "../../../src/configs/TestConfig";
+import _ from "lodash";
 
 
 /**
@@ -24,10 +25,11 @@ describe( "PubSub", () =>
 			let receivedEvents: any[] = [];
 
 			/**
-			 *	@param event		{string}
+			 *	@param channel		{string}
+			 *	@param event		{any}
 			 *	@param callback		{( ack : any ) => void}
 			 */
-			const callbackEventReceiver = ( event: any, callback: any ) =>
+			const callbackEventReceiver = ( channel : string, event: any, callback: any ) =>
 			{
 				const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 				if ( null !== errorEvent )
@@ -36,7 +38,7 @@ describe( "PubSub", () =>
 					return;
 				}
 
-				console.log( `)) 🔔 Client : received event from server: `, event );
+				//console.log( `)) 🔔 Client : received event from server: `, event );
 				//	Client : 🔔 received event from server:  {
 				//       timestamp: 1724273039193,
 				//       serverId: '28c726b7-0acf-4102-bd88-810f5494478c',
@@ -61,7 +63,7 @@ describe( "PubSub", () =>
 
 			const pushClientOptions = {
 				deviceId : deviceId,
-				serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
 
@@ -81,8 +83,15 @@ describe( "PubSub", () =>
 			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
 			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
 			const subscribeResponse = await pushClient.subscribe( subscribeRequest, callbackEventReceiver );
-			console.log( `Client : 🐹 server response of the subscription request: `, subscribeResponse );
+			//console.log( `Client : 🐹 server response of the subscription request: `, subscribeResponse );
 			//expect( subscribeResponse && 200 === subscribeResponse.status ).toBeTruthy();
+			expect( subscribeResponse ).toBeDefined();
+			expect( subscribeResponse ).toHaveProperty( `status` );
+			expect( subscribeResponse ).toHaveProperty( `data` );
+			expect( subscribeResponse ).toHaveProperty( `serverId` );
+			expect( subscribeResponse ).toHaveProperty( `timestamp` );
+			expect( subscribeResponse ).toHaveProperty( `version` );
+			expect( _.isObject( subscribeResponse.data ) ).toBeTruthy();
 			//	wait 1 second
 			await TestUtil.sleep( 1000 );
 
@@ -106,12 +115,24 @@ describe( "PubSub", () =>
 			publishRequest.hash = await Web3Digester.hashObject( publishRequest );
 			const response = await pushClient.publish( publishRequest );
 			console.log( `Client : server response of the publish request: `, response );
+			expect( response ).toBeDefined();
+			expect( response ).toHaveProperty( `timestamp` );
+			expect( response ).toHaveProperty( `serverId` );
+			expect( response ).toHaveProperty( `version` );
+			expect( response ).toHaveProperty( `status` );
+			expect( response ).toHaveProperty( `data` );
+			expect( _.isObject( response.data ) ).toBeTruthy();
 			await TestUtil.sleep( 10 );
 
-			await TestUtil.sleep( 5000 );
+			await TestUtil.sleep( 1000 );
+			//console.log( `receivedEvents :`, receivedEvents );
+			expect( receivedEvents ).toBeDefined();
+			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
+			expect( receivedEvents.length ).toBeGreaterThanOrEqual( 0 );
 
+			pushClient.close();
+			await TestUtil.sleep( 3000 );
 
-			console.log( `receivedEvents :`, receivedEvents );
-		}, 9000 );
+		}, 25000 );
 	} );
 } );

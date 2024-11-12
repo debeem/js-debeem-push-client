@@ -32,10 +32,11 @@ describe( "Count", () =>
 			let receivedEvents: any[] = [];
 
 			/**
+			 *	@param channel		{string}
 			 *	@param event		{string}
 			 *	@param callback		{( ack : any ) => void}
 			 */
-			const callbackEventReceiver = ( event: any, callback: any ) =>
+			const callbackEventReceiver = ( channel : string, event: any, callback: any ) =>
 			{
 				const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 				if ( null !== errorEvent )
@@ -71,7 +72,7 @@ describe( "Count", () =>
 			const pushClientOptions = {
 				deviceId : deviceId,
 				//serverUrl : `http://localhost:6501`
-				serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
 
@@ -128,12 +129,12 @@ describe( "Count", () =>
 					}
 
 				};
-				console.log( `🎾 will publish an event to server: ${ pushClientOptions.serverUrl } :`, publishRequest );
+				//console.log( `🎾 will publish an event to server: ${ pushClientOptions.serverUrl } :`, publishRequest );
 				publishRequest.sig = await Web3Signer.signObject( testWalletObjList.alice.privateKey, publishRequest );
 				publishRequest.hash = await Web3Digester.hashObject( publishRequest );
 				const response : PushServerResponse = await pushClient.publish( publishRequest );
 				//console.log( `Client : server response of the publish request: `, response );
-				await TestUtil.sleep( 10 );
+				await TestUtil.sleep( 100 );
 			}
 
 			//
@@ -175,7 +176,7 @@ describe( "Count", () =>
 			};
 			const countResponse1 : PushServerResponse = await pushClient.count( countRequest1 );
 			//console.log( `countResponse1 :`, countResponse1 );
-			console.log( `countResponse1.data :`, countResponse1.data );
+			//console.log( `countResponse1.data :`, countResponse1.data );
 			//	    countResponse1.data : {
 			//       resultList: [
 			//         {
@@ -221,7 +222,7 @@ describe( "Count", () =>
 				expect( item.lastElementList.length ).toBeLessThanOrEqual( 3 );
 			}
 
-			await TestUtil.sleep( 3000 );
+			await TestUtil.sleep( 1000 );
 
 
 			//	startTimestamp
@@ -242,7 +243,7 @@ describe( "Count", () =>
 				]
 			};
 			const countResponse2 : PushServerResponse = await pushClient.count( countRequest2 );
-			console.log( `countResponse2 :`, countResponse2 );
+			//console.log( `countResponse2 :`, countResponse2 );
 			//	    countResponse2.data : {
 			//       resultList: [
 			//         {
@@ -278,6 +279,9 @@ describe( "Count", () =>
 			//	because it returns a maximum of 3 records
 			expect( countResponse2.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
 
-		}, 9000 );
+			pushClient.close();
+			await TestUtil.sleep( 3000 );
+
+		}, 25000 );
 	} );
 } );

@@ -5,7 +5,7 @@ import {
 	PullRequest,
 	PushClient,
 	PushServerResponse,
-	SubscribeRequest,
+	SubscribeRequest, VaChannel,
 	VaPushServerResponse
 } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
@@ -34,18 +34,26 @@ describe( "Pull", () =>
 
 			const pushClientOptions = {
 				deviceId : deviceId,
-				serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
 
 			let receivedEvents: any[] = [];
 
 			/**
-			 *	@param event		{string}
+			 *	@param channel		{string}
+			 *	@param event		{any}
 			 *	@param callback		{( ack : any ) => void}
 			 */
-			const callbackEventReceiver = ( event: any, callback: any ) =>
+			const callbackEventReceiver = ( channel : string, event: any, callback: any ) =>
 			{
+				const errorChannel : string | null = VaChannel.validateChannel( channel );
+				if ( null !== errorChannel )
+				{
+					console.warn( `callbackEventReceiver :: errorChannel :`, errorChannel );
+					return;
+				}
+
 				const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 				if ( null !== errorEvent )
 				{
@@ -243,11 +251,13 @@ describe( "Pull", () =>
 				}
 			}
 
-			await TestUtil.sleep( 3000 );
+			await TestUtil.sleep( 1000 );
 			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
 			expect( receivedEvents.length ).toBeGreaterThan( 0 );
 
+			pushClient.close();
+			await TestUtil.sleep( 3000 );
 
-		}, 9000 );
+		}, 25000 );
 	} );
 } );

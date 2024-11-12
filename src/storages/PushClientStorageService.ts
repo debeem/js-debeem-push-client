@@ -1,4 +1,4 @@
-import { PushClientItem } from "../entities/PushClientEntity";
+import { PushClientOffsetItem } from "../entities/PushClientEntity";
 
 
 if ( typeof process !== 'undefined' && process.env )
@@ -17,10 +17,10 @@ import _ from "lodash";
 /**
  * 	@class
  */
-export class PushClientStorageService extends AbstractStorageService<PushClientItem> implements IStorageService
+export class PushClientStorageService extends AbstractStorageService<PushClientOffsetItem> implements IStorageService
 {
-	protected db !: IDBPDatabase<PushClientItem>;
-	protected storeName !: StoreNames<PushClientItem>;
+	protected db !: IDBPDatabase<PushClientOffsetItem>;
+	protected storeName !: StoreNames<PushClientOffsetItem>;
 
 	constructor()
 	{
@@ -45,7 +45,7 @@ export class PushClientStorageService extends AbstractStorageService<PushClientI
 				}
 
 				const _this = this;
-				this.db = await openDB<PushClientItem>
+				this.db = await openDB<PushClientOffsetItem>
 				(
 					this.databaseName,
 					this.version,
@@ -96,10 +96,10 @@ export class PushClientStorageService extends AbstractStorageService<PushClientI
 	/**
 	 * 	get a storage key
 	 *
-	 *	@param value	{PushClientItem}
+	 *	@param value	{PushClientOffsetItem}
 	 *	@returns {string | null}
 	 */
-	public getKeyByItem( value : PushClientItem ) : string | null
+	public getKeyByItem( value : PushClientOffsetItem ) : string | null
 	{
 		return null;
 	}

@@ -1,27 +1,54 @@
 import _ from "lodash";
 import { PushServerResponse } from "../models/PushServerResponse";
 import { VaPushServerResponse } from "../validators/VaPushServerResponse";
-import { ClientReceiveEventCallback } from "../models/callbacks/ClientReceiveEventCallback";
+import { CallbackClientEventReceiver } from "../models/callbacks/ClientEventReceiver";
 import { PushClientStorageService } from "../storages/PushClientStorageService";
 import { VaPublishRequest } from "../validators/requests/VaPublishRequest";
 import { PublishRequest } from "../models/requests/PublishRequest";
-import { PushClientItem, pushClientStorageKey } from "../entities/PushClientEntity";
+import {
+	defaultPushClientOffsetItem, defaultPushClientMaxOffset,
+	defaultPushClientMinOffset,
+	PushClientOffsetItem,
+	pushClientStorageKey
+} from "../entities/PushClientEntity";
 import { clearInterval } from "timers";
 import { Logger, LoggerUtil } from "../utils/LoggerUtil";
+import { VaChannel } from "../validators/VaChannel";
+import { IServerEventReceiver } from "../models/callbacks/ServerEventReceiver";
 
 
 export const defaultEventPoolSize = 1024;
 
+/**
+ * 	class options
+ */
 export interface EventPoolOptions
 {
 	maxSize : number;
 }
 
+/**
+ * 	define client item type
+ */
+export type EventPoolClientItem =
+{
+	eventReceiver : CallbackClientEventReceiver;
+	events : Array<PushServerResponse>;
+	offset : PushClientOffsetItem;
+};
+
+export const defaultEventPoolClientItem =
+{
+	eventReceiver : null,
+	events : [],
+	offset : _.cloneDeep( defaultPushClientOffsetItem ),
+};
+
 
 /**
  * 	@class
  */
-export class EventPool
+export class EventPool implements IServerEventReceiver
 {
 	/**
 	 * 	options
@@ -30,25 +57,26 @@ export class EventPool
 	protected options !: EventPoolOptions;
 
 	/**
-	 * 	callback function
-	 *	@protected
-	 */
-	protected receiveEventCallback !: ClientReceiveEventCallback;
-
-	/**
-	 * 	event array
-	 *	@protected
-	 */
-	protected receivedEvents : Array<PushServerResponse> = [];
-
-	/**
 	 * 	last offset
 	 *	@protected
 	 */
 	protected pushClientStorageService : PushClientStorageService = new PushClientStorageService();
-	protected minOffset : number = Number.MAX_VALUE;
-	protected maxOffset : number = 0;
-	protected offsetFlusherInterval : any;
+
+	/**
+	 *	@protected
+	 */
+	protected offsetFlusherInterval : number;
+
+	/**
+	 * 	- key 	: channel
+	 * 	- value	: {EventPoolClientItem}
+	 *	@protected
+	 */
+	protected clientItems : { [ key : string ] : EventPoolClientItem } = {};
+
+	// protected minOffset : number = Number.MAX_VALUE;
+	// protected maxOffset : number = 0;
+
 
 	/**
 	 * 	log
@@ -71,7 +99,7 @@ export class EventPool
 		this.options = options;
 
 		//	bind pointer `this` to the function callbackEventReceiver for callback
-		this.callbackEventReceiver = this.callbackEventReceiver.bind( this );
+		this.serverEventReceiver = this.serverEventReceiver.bind( this );
 
 		//	create an interval for flushing offset into local database
 		this.startOffsetFlusher();
@@ -89,41 +117,70 @@ export class EventPool
 	}
 
 	/**
-	 * 	set callback function address
-	 *	@param callback	{ClientReceiveEventCallback}
+	 * 	set client receiver function address
+	 *	@param channel		{string}
+	 *	@param callback		{CallbackClientEventReceiver}
+	 *	@returns {void}
 	 */
-	public setCallback( callback : ClientReceiveEventCallback ) : void
+	public setClientEventReceiver( channel : string, callback : CallbackClientEventReceiver ) : void
 	{
+		const errorChannel : string | null = VaChannel.validateChannel( channel );
+		if ( null !== errorChannel )
+		{
+			throw new Error( `${ this.constructor.name }.setClientEventReceiver :: invalid channel, ${ errorChannel }` );
+		}
 		if ( ! _.isFunction( callback ) )
 		{
-			throw new Error( `${ this.constructor.name }.setCallback :: invalid callback` );
+			throw new Error( `${ this.constructor.name }.setClientEventReceiver :: invalid callback` );
 		}
 
 		//	...
-		this.receiveEventCallback = callback;
+		this.initClientItemIfNeeded( channel );
+		this.clientItems[ channel ].eventReceiver = callback;
 	}
 
 	/**
+	 * 	@param channel	{string}
 	 * 	@returns {Array<PushServerResponse>}
 	 */
-	public getEvents() : Array<PushServerResponse>
+	public getEvents( channel : string ) : Array<PushServerResponse>
 	{
-		return this.receivedEvents;
+		const errorChannel : string | null = VaChannel.validateChannel( channel );
+		if ( null !== errorChannel )
+		{
+			throw new Error( `${ this.constructor.name }.getEvents :: invalid channel, ${ errorChannel }` );
+		}
+
+		if ( _.has( this.clientItems, channel ) &&
+			Array.isArray( this.clientItems[ channel ].events ) )
+		{
+			return this.clientItems[ channel ].events;
+		}
+
+		return [];
 	}
 
 	/**
 	 * 	receive event
+	 * 	@implements
 	 *
 	 *	@param event		{PushServerResponse}
-	 *	@param callback		{( ack : any ) => void}
+	 *	@param ackCallback	{( ack : any ) => void}
 	 *	@returns {void}
 	 */
-	public callbackEventReceiver( event : PushServerResponse, callback ?: ( ack : any ) => void ) : void
+	public serverEventReceiver( event : PushServerResponse, ackCallback ?: ( ack : any ) => void ) : void
 	{
-		setTimeout( () =>
+		//	...
+		this.addEvent( event );
+
+		//	...
+		if ( _.isFunction( ackCallback ) )
 		{
-			this.addEvent( event );
-		}, 1 );
+			this.log.debug( `${ this.constructor.name }.serverEventReceiver :: received event: will call callback` );
+			ackCallback( {
+				status : `ok`
+			} );
+		}
 	}
 
 	/**
@@ -140,6 +197,9 @@ export class EventPool
 			return;
 		}
 
+		/**
+		 * 	extract publishRequest data
+		 */
 		const publishRequest : PublishRequest = event.data;
 		if ( null !== VaPublishRequest.validatePublishRequest( publishRequest, true ) )
 		{
@@ -148,72 +208,108 @@ export class EventPool
 		}
 
 		//	...
-		if ( _.isFunction( this.receiveEventCallback ) )
+		const channel : string = publishRequest.channel;
+
+		this.initClientItemIfNeeded( channel );
+		if ( _.isFunction( this.clientItems[ channel ].eventReceiver ) )
 		{
-			this.receiveEventCallback( event );
+			this.clientItems[ channel ].eventReceiver( channel, event );
 		}
 
-		//	...
-		this.receivedEvents.push( event );
-		if ( this.receivedEvents.length > this.options.maxSize )
+		this.clientItems[ channel ].events.push( event );
+		if ( this.clientItems[ channel ].events.length > this.options.maxSize )
 		{
 			//	delete the oldest data
-			this.receivedEvents.shift();
+			this.clientItems[ channel ].events.shift();
 		}
 
 		//	sort events
-		this.receivedEvents.sort( ( a : PushServerResponse, b : PushServerResponse ) => a.timestamp! - b.timestamp! );
+		this.clientItems[ channel ].events.sort( ( a : PushServerResponse, b : PushServerResponse ) => a.timestamp! - b.timestamp! );
 
 		//	update the lastOffset
-		if ( publishRequest.timestamp > this.maxOffset )
+		if ( publishRequest.timestamp > this.clientItems[ channel ].offset.maxOffset )
 		{
-			this.maxOffset = publishRequest.timestamp;
+			this.clientItems[ channel ].offset.maxOffset = publishRequest.timestamp;
 		}
-		if ( publishRequest.timestamp < this.minOffset )
+		if ( publishRequest.timestamp < this.clientItems[ channel ].offset.minOffset )
 		{
-			this.minOffset = publishRequest.timestamp;
+			this.clientItems[ channel ].offset.minOffset = publishRequest.timestamp;
 		}
 	}
 
 	/**
-	 * 	get earliest/min offset
+	 * 	get earliest/min offset in memory
+	 *
+	 * 	@param channel		{string}
 	 *	@returns { number }
 	 */
-	public getMinOffset() : number
+	public getMinOffset( channel : string ) : number
 	{
-		return this.minOffset;
+		const errorChannel : string | null = VaChannel.validateChannel( channel );
+		if ( null !== errorChannel )
+		{
+			throw new Error( `${ this.constructor.name }.getMinOffset :: invalid channel, ${ errorChannel }` );
+		}
+		if ( _.has( this.clientItems, channel ) )
+		{
+			return this.clientItems[ channel ].offset.minOffset;
+		}
+
+		return defaultPushClientMinOffset;
 	}
 
 	/**
-	 * 	get latest/max Offset
+	 * 	get latest/max Offset in memory
+	 *
+	 * 	@param channel		{string}
 	 * 	@returns { number }
 	 */
-	public getMaxOffset() : number
+	public getMaxOffset( channel : string ) : number
 	{
-		return this.maxOffset;
+		const errorChannel : string | null = VaChannel.validateChannel( channel );
+		if ( null !== errorChannel )
+		{
+			throw new Error( `${ this.constructor.name }.getMaxOffset :: invalid channel, ${ errorChannel }` );
+		}
+		if ( _.has( this.clientItems, channel ) )
+		{
+			return this.clientItems[ channel ].offset.maxOffset;
+		}
+
+		return defaultPushClientMaxOffset;
 	}
 
 	/**
 	 * 	load lastOffset/maxOffset from local database
+	 *
+	 * 	@param channel		{string}
 	 * 	@returns {Promise< number >}
 	 */
-	public loadOffset() : Promise< PushClientItem >
+	public loadOffset( channel : string ) : Promise< PushClientOffsetItem >
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
 			try
 			{
-				const pushClientItem : PushClientItem | null = await this.pushClientStorageService.get( pushClientStorageKey );
-				if ( ! pushClientItem )
+				const errorChannel : string | null = VaChannel.validateChannel( channel );
+				if ( null !== errorChannel )
 				{
-					return resolve( {
-						minOffset : 0,
-						maxOffset : 0,
-					});
+					return reject( `${ this.constructor.name }.loadOffset :: invalid channel, ${ errorChannel }` );
 				}
 
 				//	...
-				resolve( pushClientItem );
+				const offsetItem : PushClientOffsetItem | null = await this.pushClientStorageService.get( channel );
+				if ( offsetItem )
+				{
+					this.initClientItemIfNeeded( channel );
+					this.clientItems[ channel ].offset = offsetItem;
+
+					//	...
+					return resolve( offsetItem );
+				}
+
+				//	...
+				resolve( defaultPushClientOffsetItem );
 			}
 			catch ( err )
 			{
@@ -242,42 +338,38 @@ export class EventPool
 				throw new Error( `${ this.constructor.name }.threadOffsetFlusher :: uninitialized this.pushClientStorageService` );
 			}
 
-			//	...
-			const pushClientItem : PushClientItem = {
-				minOffset : this.minOffset,
-				maxOffset : this.maxOffset,
-			};
-			await this.pushClientStorageService.put( pushClientStorageKey, pushClientItem );
-			//const readItem : PushClientItem | null = await this.pushClientStorageService.get( pushClientStorageKey );
-			//console.log( `)) flushed lastOffset to local storage, lastOffset in db : `, readItem );
+			for ( const channel in this.clientItems )
+			{
+				//	to avoid inherited properties from being enumerated
+				if ( ! this.clientItems.hasOwnProperty( channel ) )
+				{
+					continue;
+				}
+				if ( null !== VaChannel.validateChannel( channel ) )
+				{
+					console.warn( `${ this.constructor.name }.startOffsetFlusher->offsetFlusherInterval :: invalid channel[${ channel }]` );
+					continue;
+				}
+
+				const clientItem : EventPoolClientItem = this.clientItems[ channel ];
+				await this.pushClientStorageService.put( channel, clientItem.offset );
+			}
 
 		}, 3000 );
 	}
-	//
-	// protected threadOffsetFlusher() : Promise<void>
-	// {
-	// 	return new Promise( async ( resolve, reject ) =>
-	// 	{
-	// 		try
-	// 		{
-	// 			if ( ! this.pushClientStorageService )
-	// 			{
-	// 				return reject( `${ this.constructor.name }.threadOffsetFlusher :: uninitialized this.pushClientStorageService` );
-	// 			}
-	//
-	// 			//	...
-	// 			const pushClientItem : PushClientItem = {
-	// 				lastOffset : this.lastOffset,
-	// 			};
-	// 			await this.pushClientStorageService.put( pushClientStorageKey, pushClientItem );
-	//
-	// 			//	...
-	// 			resolve();
-	// 		}
-	// 		catch ( err )
-	// 		{
-	// 			reject( err );
-	// 		}
-	// 	});
-	// }
+
+	/**
+	 * 	initialize client item
+	 *	@param channel		{string}
+	 *	@returns {void}
+	 *	@private
+	 */
+	private initClientItemIfNeeded( channel : string ) : void
+	{
+		if ( ! _.has( this.clientItems, channel ) )
+		{
+			this.clientItems[ channel ] = _.cloneDeep( defaultEventPoolClientItem );
+		}
+	}
+
 }

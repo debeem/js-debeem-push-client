@@ -23,6 +23,12 @@ export class VaChannel
 			return `invalid .channel, invalid format(must start with [pch] or [bch])`;
 		}
 
+		const regex = /^[A-Za-z0-9\-_]*$/;
+		if ( ! regex.test( channel ) )
+		{
+			return `invalid .channel, must consist of English letters, numbers and characters -,_`;
+		}
+
 		return null;
 	}
 }

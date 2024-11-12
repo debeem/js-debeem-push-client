@@ -7,10 +7,11 @@ let receivedEvents = [];
 
 
 /**
- *	@param event		{string}
+ *	@param channel		{string}
+ *	@param event		{any}
  *	@param callback		{( ack : any ) => void}
  */
-function callbackEventReceiver( event, callback )
+function callbackEventReceiver( channel, event, callback )
 {
 	const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 	if ( null !== errorEvent )

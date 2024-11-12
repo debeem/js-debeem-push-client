@@ -22,6 +22,11 @@ export interface ConnectorMap
 export interface IConnector
 {
 	/**
+	 *	close the connection to server
+	 */
+	close();
+
+	/**
 	 *	for publishers
 	 *	@param publishRequest
 	 */

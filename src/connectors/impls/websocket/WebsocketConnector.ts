@@ -122,13 +122,9 @@ export class WebsocketConnector implements IConnector
 			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback :`, ackCallback );
 			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback is function: `, _.isFunction( ackCallback ) );
 
-			if ( _.isFunction( this.options.receiveEventCallback ) )
+			if ( _.isFunction( this.options.serverEventReceiver ) )
 			{
-				//	.payload.body is encrypted string
-				this.options.receiveEventCallback( response, ( ack : any ) =>
-				{
-					this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: receiveEventCallback ack:`, ack );
-				} );
+				this.options.serverEventReceiver( response, ackCallback );
 			}
 
 			//
@@ -146,6 +142,17 @@ export class WebsocketConnector implements IConnector
 				this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: callback is not a function` );
 			}
 		} );
+	}
+
+	/**
+	 * 	close the connection to server
+	 */
+	public close()
+	{
+		if ( this.socket )
+		{
+			this.socket.disconnect();
+		}
 	}
 
 	/**

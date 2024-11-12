@@ -1,4 +1,4 @@
-import { ClientReceiveEventCallback } from "./callbacks/ClientReceiveEventCallback";
+import { CallbackServerEventReceiver } from "./callbacks/ServerEventReceiver";
 
 
 /**
@@ -49,6 +49,6 @@ export interface ConnectorOptions extends PushClientOptions
 	/**
 	 * 	callback function for receiving event from server
 	 */
-	receiveEventCallback : ClientReceiveEventCallback
+	serverEventReceiver : CallbackServerEventReceiver
 }
 

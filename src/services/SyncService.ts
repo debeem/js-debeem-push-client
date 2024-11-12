@@ -56,7 +56,7 @@ export class SyncService
 					const result : any = pullResponse?.data?.result;
 					if ( ! result )
 					{
-						this.log.warn( `${ this.constructor.name }.pullEvents :: null pull result` );
+						//this.log.warn( `${ this.constructor.name }.pullEvents :: null pull result` );
 						continue;
 					}
 					if ( ! _.isNumber( result.total ) ||

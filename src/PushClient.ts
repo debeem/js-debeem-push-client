@@ -8,11 +8,11 @@ import { WebsocketConnector } from "./connectors/impls/websocket/WebsocketConnec
 import { ConnectorMap, IConnector } from "./connectors/IConnector";
 import { ServerUrlUtil } from "./utils/ServerUrlUtil";
 import { PushServerResponse } from "./models/PushServerResponse";
-import { ClientReceiveEventCallback } from "./models/callbacks/ClientReceiveEventCallback";
+import { CallbackClientEventReceiver } from "./models/callbacks/ClientEventReceiver";
 import { defaultEventPoolSize, EventPool } from "./pools/EventPool";
 import { SyncService } from "./services/SyncService";
 import { PullRequest } from "./models/requests/PullRequest";
-import { PushClientItem } from "./entities/PushClientEntity";
+import { PushClientOffsetItem } from "./entities/PushClientEntity";
 import { CountRequest } from "./models/requests/CountRequest";
 import _ from "lodash";
 
@@ -69,7 +69,7 @@ export class PushClient
 		this.connectorMap = {
 			ws : new WebsocketConnector({
 				...this.options,
-				receiveEventCallback : this.eventPool.callbackEventReceiver
+				serverEventReceiver : this.eventPool.serverEventReceiver
 			})
 		};
 		if ( ServerUrlUtil.isWebsocket( this.options.serverUrl ) )
@@ -83,6 +83,16 @@ export class PushClient
 		}
 	}
 
+	/**
+	 * 	close the connection to server
+	 */
+	public close()
+	{
+		if ( this.currentConnector )
+		{
+			this.currentConnector.close();
+		}
+	}
 
 	/**
 	 * 	publish
@@ -110,10 +120,10 @@ export class PushClient
 	 * 	start listening
 	 *
 	 * 	@param subscribeRequest		{SubscribeRequest}
-	 * 	@param callback			{ClientReceiveEventCallback}
+	 * 	@param callback			{CallbackClientEventReceiver}
 	 * 	@returns {Promise<PushServerResponse>}
 	 */
-	public subscribe( subscribeRequest : SubscribeRequest, callback : ClientReceiveEventCallback ) : Promise<PushServerResponse>
+	public subscribe( subscribeRequest : SubscribeRequest, callback : CallbackClientEventReceiver ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -125,15 +135,19 @@ export class PushClient
 					200 === responseSub.status )
 				{
 					//	...
-					this.eventPool.setCallback( callback );
+					const channel : string = subscribeRequest.channel;
+					this.eventPool.setClientEventReceiver( channel, callback );
+
+					if ( true === subscribeRequest.skipAutoPullingData )
+					{
+						//	will skip the automatic event fetching process from the server
+						return resolve( responseSub );
+					}
 
 					//
-					//	todo
-					//	add channel for loadOffset
-					//
-
 					//	load maxOffset/maxTimestamp
-					const loadedOffset : PushClientItem = await this.eventPool.loadOffset();
+					//
+					const loadedOffset : PushClientOffsetItem = await this.eventPool.loadOffset( channel );
 					let pullOffset = loadedOffset.maxOffset;
 					if ( _.isNumber( subscribeRequest.offset ) &&
 						subscribeRequest.offset > pullOffset )
