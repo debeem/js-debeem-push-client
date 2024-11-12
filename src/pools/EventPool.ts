@@ -8,8 +8,7 @@ import { PublishRequest } from "../models/requests/PublishRequest";
 import {
 	defaultPushClientOffsetItem, defaultPushClientMaxOffset,
 	defaultPushClientMinOffset,
-	PushClientOffsetItem,
-	pushClientStorageKey
+	PushClientOffsetItem
 } from "../entities/PushClientEntity";
 import { clearInterval } from "timers";
 import { Logger, LoggerUtil } from "../utils/LoggerUtil";
@@ -65,7 +64,7 @@ export class EventPool implements IServerEventReceiver
 	/**
 	 *	@protected
 	 */
-	protected offsetFlusherInterval : NodeJS.Timeout | null = null;
+	protected offsetFlusherInterval : NodeJS.Timeout | number | undefined = undefined;
 
 	/**
 	 * 	- key 	: channel
@@ -211,9 +210,10 @@ export class EventPool implements IServerEventReceiver
 		const channel : string = publishRequest.channel;
 
 		this.initClientItemIfNeeded( channel );
-		if ( _.isFunction( this.clientItems[ channel ].eventReceiver ) )
+		if ( this.clientItems[ channel ].eventReceiver &&
+			_.isFunction( this.clientItems[ channel ].eventReceiver ) )
 		{
-			this.clientItems[ channel ].eventReceiver( channel, event );
+			this.clientItems[ channel ].eventReceiver!( channel, event );
 		}
 
 		this.clientItems[ channel ].events.push( event );
