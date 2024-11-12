@@ -111,7 +111,7 @@ export class EventPool implements IServerEventReceiver
 	{
 		if ( this.offsetFlusherInterval )
 		{
-			clearInterval( this.offsetFlusherInterval );
+			clearInterval( this.offsetFlusherInterval as number );
 		}
 	}
 
@@ -327,7 +327,7 @@ export class EventPool implements IServerEventReceiver
 	{
 		if ( this.offsetFlusherInterval )
 		{
-			clearInterval( this.offsetFlusherInterval );
+			clearInterval( this.offsetFlusherInterval as number );
 		}
 
 		//	...
