@@ -24,7 +24,7 @@ export interface IConnector
 	/**
 	 *	close the connection to server
 	 */
-	close();
+	close() : void;
 
 	/**
 	 *	for publishers

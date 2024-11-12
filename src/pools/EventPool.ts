@@ -32,7 +32,7 @@ export interface EventPoolOptions
  */
 export type EventPoolClientItem =
 {
-	eventReceiver : CallbackClientEventReceiver;
+	eventReceiver : CallbackClientEventReceiver | null;
 	events : Array<PushServerResponse>;
 	offset : PushClientOffsetItem;
 };
@@ -65,7 +65,7 @@ export class EventPool implements IServerEventReceiver
 	/**
 	 *	@protected
 	 */
-	protected offsetFlusherInterval : number;
+	protected offsetFlusherInterval : NodeJS.Timeout | null = null;
 
 	/**
 	 * 	- key 	: channel
