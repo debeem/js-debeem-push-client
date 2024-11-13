@@ -1,6 +1,5 @@
 import { describe, expect } from '@jest/globals';
-import { ServerIdUtil, ServerUrlUtil, VaCountRequest } from "../../../../src";
-import _ from "lodash";
+import { VaCountRequest } from "../../../../src";
 import { testWalletObjList } from "../../../../src/configs/TestConfig";
 
 /**
