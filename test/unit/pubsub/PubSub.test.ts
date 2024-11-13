@@ -1,5 +1,5 @@
 import { describe, expect } from '@jest/globals';
-import { PublishRequest, PushClient, VaPushServerResponse } from "../../../src";
+import { PublishRequest, PushClient, PushServerResponse, SubscribeRequest, VaPushServerResponse } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { TestUtil } from "debeem-utils";
 import { testWalletObjList } from "../../../src/configs/TestConfig";
@@ -135,4 +135,197 @@ describe( "PubSub", () =>
 
 		}, 25000 );
 	} );
+
+	//
+	describe( "Channel name", () =>
+	{
+		it( "should subscribe to a channel, even if the channel name doesn't include the sub's wallet address", async () =>
+		{
+			//
+			//	Bob subscribes to a channel
+			//
+			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
+			const channel : string = `bch-bobo-${ testWalletObjList.alice.address }`;
+
+			const pushClientOptions = {
+				deviceId : deviceId,
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
+
+			let subscribeRequest : SubscribeRequest = {
+				timestamp : new Date().getTime(),
+				wallet : testWalletObjList.bob.address,
+				deviceId : deviceId,
+				deviceStatus : `working`,
+				offset : 0,
+				channel : channel,
+				hash : ``,
+				sig : ``
+			};
+			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
+			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
+
+			let subscribedSuccessfully = false;
+			const responseSub : PushServerResponse = await pushClient.subscribe( subscribeRequest,  ( channel : string, response: any, _callback: any ) =>
+			{
+				console.log( `Client : server of channel [${ channel }] respond: `, response );
+				if ( response && 200 === response.status )
+				{
+					subscribedSuccessfully = true;
+				}
+			});
+			console.log( `responseSub: `, responseSub );
+			expect( responseSub ).toBeDefined();
+			expect( responseSub ).toHaveProperty( `status` );
+			expect( responseSub ).toHaveProperty( `data` );
+			expect( responseSub ).toHaveProperty( `serverId` );
+			expect( responseSub ).toHaveProperty( `timestamp` );
+			expect( responseSub ).toHaveProperty( `version` );
+			expect( responseSub.status ).toBe( 200 );
+
+			//	...
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
+
+		}, 60 * 10e3 );
+
+		it( "should return error `invalid personal subscription channel name`", async () =>
+		{
+			//
+			//	Bob subscribes to a channel
+			//
+			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
+			const channel : string = `pch-bobo-${ testWalletObjList.alice.address }`;
+
+			const pushClientOptions = {
+				deviceId : deviceId,
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
+
+			let subscribeRequest : SubscribeRequest = {
+				timestamp : new Date().getTime(),
+				wallet : testWalletObjList.bob.address,
+				deviceId : deviceId,
+				deviceStatus : `working`,
+				offset : 0,
+				channel : channel,
+				hash : ``,
+				sig : ``
+			};
+			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
+			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
+
+			let subscribedSuccessfully = false;
+			const responseSub : PushServerResponse = await pushClient.subscribe( subscribeRequest,  ( channel : string, response: any, _callback: any ) =>
+			{
+				console.log( `Client : server of channel [${ channel }] respond: `, response );
+			});
+			console.log( `responseSub: `, responseSub );
+			expect( responseSub ).toBeDefined();
+			expect( responseSub ).toHaveProperty( `status` );
+			expect( responseSub ).toHaveProperty( `error` );
+			expect( responseSub ).toHaveProperty( `serverId` );
+			expect( responseSub ).toHaveProperty( `timestamp` );
+			expect( responseSub ).toHaveProperty( `version` );
+			expect( responseSub.status ).toBe( 400 );
+			expect( responseSub.error ).toBe( `SubscribeAuth.auth :: invalid personal subscription channel name` );
+
+			//	...
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
+
+		}, 60 * 10e3 );
+
+		it( "should return error `invalid subscribeRequest.channel :: length of .channel exceeds limit to 45-64`", async () =>
+		{
+			//
+			//	Bob subscribes to a channel
+			//
+			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
+			const channel : string = `pch-bobo-`;
+
+			const pushClientOptions = {
+				deviceId : deviceId,
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
+
+			let subscribeRequest : SubscribeRequest = {
+				timestamp : new Date().getTime(),
+				wallet : testWalletObjList.bob.address,
+				deviceId : deviceId,
+				deviceStatus : `working`,
+				offset : 0,
+				channel : channel,
+				hash : ``,
+				sig : ``
+			};
+			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
+			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
+
+			try
+			{
+				await pushClient.subscribe( subscribeRequest,  ( channel : string, response: any, _callback: any ) =>
+				{
+					console.log( `Client : server of channel [${ channel }] respond: `, response );
+				});
+			}
+			catch ( err )
+			{
+				expect( err ).toBe( `invalid subscribeRequest.channel :: length of .channel exceeds limit to 45-64` );
+			}
+
+			//	...
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
+
+		}, 60 * 10e3 );
+
+		it( "should return error `invalid subscribeRequest.channel :: invalid .channel, must consist of ...`", async () =>
+		{
+			//
+			//	Bob subscribes to a channel
+			//
+			const deviceId : string = `device-${ testWalletObjList.bob.address }`;
+			const channel : string = `pch-|-${ testWalletObjList.bob.address }`;
+
+			const pushClientOptions = {
+				deviceId : deviceId,
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
+
+			let subscribeRequest : SubscribeRequest = {
+				timestamp : new Date().getTime(),
+				wallet : testWalletObjList.bob.address,
+				deviceId : deviceId,
+				deviceStatus : `working`,
+				offset : 0,
+				channel : channel,
+				hash : ``,
+				sig : ``
+			};
+			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
+			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
+
+			try
+			{
+				await pushClient.subscribe( subscribeRequest,  ( channel : string, response: any, _callback: any ) =>
+				{
+					console.log( `Client : server of channel [${ channel }] respond: `, response );
+				});
+			}
+			catch ( err )
+			{
+				expect( err ).toBe( `invalid subscribeRequest.channel :: invalid .channel, must consist of English letters, numbers and characters -,_` );
+			}
+
+			//	...
+			pushClient.close();
+			await TestUtil.sleep( 1000 );
+
+		}, 60 * 10e3 );
+	});
 } );
