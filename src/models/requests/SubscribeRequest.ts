@@ -4,8 +4,8 @@ import { BaseRequest } from "../BaseRequest";
 /**
  * 	define the channel string length range
  */
-export const minLengthSubscribeChannel : number		= 32;
-export const maxLengthSubscribeChannel : number		= 256;
+export const minLengthSubscribeChannel : number		= 45;
+export const maxLengthSubscribeChannel : number		= 64;
 
 
 export interface SubscribeRequest extends BaseRequest
