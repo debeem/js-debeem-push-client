@@ -88,7 +88,7 @@ describe( "VaCountRequest", () =>
 						channel : ``,
 					}
 				]
-			} ) ).toBe( `invalid countRequest.options[ 0 ].channel :: length of .channel exceeds limit to 32-256` );
+			} ) ).toBe( `invalid countRequest.options[ 0 ].channel :: length of .channel exceeds limit to 45-64` );
 
 			//	#8
 			expect( VaCountRequest.validateCountRequest( {

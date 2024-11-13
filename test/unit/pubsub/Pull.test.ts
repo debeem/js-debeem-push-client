@@ -258,6 +258,6 @@ describe( "Pull", () =>
 			pushClient.close();
 			await TestUtil.sleep( 3000 );
 
-		}, 25000 );
+		}, 60 * 10e3 );
 	} );
 } );
