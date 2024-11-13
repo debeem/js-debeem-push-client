@@ -132,7 +132,7 @@ export class WebsocketConnector implements IConnector
 			//
 			if ( _.isFunction( ackCallback ) )
 			{
-				this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: will call callback` );
+				this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: will call callback to server` );
 				ackCallback( {
 					status : `ok`
 				} );

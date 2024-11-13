@@ -3,6 +3,7 @@
  */
 export * from "./models/callbacks/ServerEventReceiver";
 export * from "./models/callbacks/ClientEventReceiver";
+export * from "./models/callbacks/ResponseToClientCallback";
 
 export * from "./models/BaseRequest";
 export * from "./models/requests/PublishRequest";

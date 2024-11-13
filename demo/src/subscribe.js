@@ -1,7 +1,7 @@
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { testWalletObjList } from "./configs/TestConfig.js";
 import { TestUtil } from "debeem-utils";
-import { PushClient, VaPushServerResponse } from "debeem-push-client";
+import { PushClient, VaChannel, VaPushServerResponse } from "debeem-push-client";
 
 let receivedEvents = [];
 
@@ -13,6 +13,13 @@ let receivedEvents = [];
  */
 function callbackEventReceiver( channel, event, callback )
 {
+	const errorChannel = VaChannel.validateChannel( channel );
+	if ( null !== errorChannel )
+	{
+		console.warn( `callbackEventReceiver :: errorChannel :`, errorChannel );
+		return;
+	}
+
 	const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 	if ( null !== errorEvent )
 	{
@@ -20,7 +27,7 @@ function callbackEventReceiver( channel, event, callback )
 		return;
 	}
 
-	console.log( `)) 🔔 Client : received event from server: `, event );
+	console.log( `)) 🔔 Client : received an event from the [${ channel }] channel on the server: `, event );
 	//	Client : 🔔 received event from server:  {
 	//       timestamp: 1724273039193,
 	//       serverId: '28c726b7-0acf-4102-bd88-810f5494478c',
@@ -49,7 +56,7 @@ async function subscribe()
 
 	const pushClientOptions = {
 		deviceId : deviceId,
-		serverUrl : `http://localhost:6511`
+		serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
 	};
 	const pushClient = new PushClient( pushClientOptions );
 
