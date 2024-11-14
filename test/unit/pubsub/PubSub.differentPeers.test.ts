@@ -1,5 +1,5 @@
 import { describe, expect } from '@jest/globals';
-import { PublishRequest, PushClient, PushServerResponse, SubscribeRequest, VaPushServerResponse } from "../../../src";
+import { PublishRequest, PushClient, VaPushServerResponse } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { TestUtil } from "debeem-utils";
 import { testWalletObjList } from "../../../src/configs/TestConfig";
