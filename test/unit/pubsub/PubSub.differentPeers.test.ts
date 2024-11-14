@@ -20,7 +20,7 @@ describe( "PubSub.differentPeers", () =>
 
 	describe( "PubSub.differentPeers", () =>
 	{
-		it( "should subscribe a channel", async () =>
+		it( "should receive events from the P2P broadcast", async () =>
 		{
 			let firstEventLength : number = 0;
 			let receivedEvents: any[] = [];
@@ -62,15 +62,14 @@ describe( "PubSub.differentPeers", () =>
 			const deviceId = `device-${ testWalletObjList.bob.address }`;
 			const channel = `pch-bobo-${ testWalletObjList.bob.address }`;
 
+			//
+			//	Bob subscribes to the channel on peer 01
+			//
 			const pushClient01 = new PushClient( {
 				deviceId : deviceId,
-				//serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
-				serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
+				//serverUrl : `http://localhost:6501`
 			} );
-
-			//
-			//	Bob subscribes to the channel
-			//
 			let subscribeRequest = {
 				timestamp : new Date().getTime(),
 				wallet : testWalletObjList.bob.address,
@@ -105,15 +104,14 @@ describe( "PubSub.differentPeers", () =>
 			firstEventLength = receivedEvents.length;
 
 
+			//
+			//	Alice will publish an event to the channel on peer 02
+			//
 			const pushClient02 = new PushClient( {
 				deviceId : deviceId,
-				//serverUrl : `http://dev-node02-jpe.metabeem.com:6501`
-				serverUrl : `http://localhost:6511`
+				serverUrl : `http://dev-node02-jpe.metabeem.com:6501`
+				// serverUrl : `http://localhost:6511`
 			} );
-
-			//
-			//	Alice publish some events to the channel
-			//
 			let publishRequest : PublishRequest = {
 				timestamp : new Date().getTime(),
 				wallet : testWalletObjList.alice.address,
@@ -122,7 +120,7 @@ describe( "PubSub.differentPeers", () =>
 				hash : ``,
 				sig : ``,
 				body : {
-					index : 0,
+					index : 10010,
 					time : new Date().toLocaleString()
 				}
 			};
@@ -145,6 +143,29 @@ describe( "PubSub.differentPeers", () =>
 			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
 			expect( receivedEvents.length ).toBeGreaterThan( 0 );
 			expect( receivedEvents.length ).toBe( firstEventLength + 1 );
+
+			const lastEvent = receivedEvents[ receivedEvents.length - 1 ];
+			console.log( `lastEvent :`, lastEvent );
+			//    lastEvent : {
+			//       timestamp: 1731604176618,
+			//       serverId: '6c03895c-d8e1-4c10-8e8a-644253799e1e',
+			//       version: '1.0.0',
+			//       status: 200,
+			//       data: {
+			//         timestamp: 1731604176618,
+			//         wallet: '0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357',
+			//         deviceId: '',
+			//         channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//         hash: '0x84c8ea463de61724869e7150170136060ea063fb94fb01fc1e3d52618e1d8f39',
+			//         sig: '0x0b2c8f586730a7122a0913671b53291aa783c0c650fd038148b80d8b1de49f885318915dce1f350f679750b1b260ca80f797f8a3521049c0fd9d226598f7adcb1c',
+			//         body: { index: 10010, time: '11/15/2024, 1:09:36 AM' }
+			//       }
+			//     }
+			expect( lastEvent ).toBeDefined();
+			expect( lastEvent ).toHaveProperty( `data` );
+			expect( _.isObject( lastEvent.data ) ).toBeTruthy();
+			expect( _.isObject( lastEvent.data.body ) ).toBeTruthy();
+			expect( lastEvent.data.body.index ).toBe( 10010 );
 
 			//	...
 			pushClient01.close();
