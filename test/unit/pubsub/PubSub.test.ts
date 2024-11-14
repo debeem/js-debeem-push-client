@@ -226,7 +226,6 @@ describe( "PubSub", () =>
 			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
 			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
 
-			let subscribedSuccessfully = false;
 			const responseSub : PushServerResponse = await pushClient.subscribe( subscribeRequest,  ( channel : string, response: any, _callback: any ) =>
 			{
 				console.log( `Client : server of channel [${ channel }] respond: `, response );

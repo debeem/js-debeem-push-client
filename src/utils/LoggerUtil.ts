@@ -16,8 +16,6 @@ export class LoggerUtil
 	constructor()
 	{
 		log.setLevel( `debug` );
-
-
 		log.methodFactory = function ( methodName : LogLevelNames, logLevel : LogLevelNumbers, loggerName )
 		{
 			let rawMethod = originalFactory( methodName, logLevel, loggerName );

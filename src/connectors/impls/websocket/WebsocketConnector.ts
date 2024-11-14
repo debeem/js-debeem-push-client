@@ -118,9 +118,9 @@ export class WebsocketConnector implements IConnector
 		} );
 		this.socket.on( `event`, ( response : PushServerResponse, ackCallback : ( ack : any ) => void ) =>
 		{
-			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: `, response );
-			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback :`, ackCallback );
-			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback is function: `, _.isFunction( ackCallback ) );
+			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: `, { response } );
+			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback :`, { ackCallback } );
+			this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: ackCallback is function: `, { ackCallbackIsFunction : _.isFunction( ackCallback ) } );
 
 			if ( _.isFunction( this.options.serverEventReceiver ) )
 			{
@@ -132,7 +132,7 @@ export class WebsocketConnector implements IConnector
 			//
 			if ( _.isFunction( ackCallback ) )
 			{
-				this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: will call callback to server` );
+				this.log.debug( `${ this.constructor.name }.setupEvents on[event] :: received event: will call callback to server` );
 				ackCallback( {
 					status : `ok`
 				} );
