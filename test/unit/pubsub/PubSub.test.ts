@@ -22,6 +22,7 @@ describe( "PubSub", () =>
 	{
 		it( "should subscribe a channel", async () =>
 		{
+			let firstEventLength : number = 0;
 			let receivedEvents: any[] = [];
 
 			/**
@@ -34,11 +35,11 @@ describe( "PubSub", () =>
 				const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 				if ( null !== errorEvent )
 				{
-					console.warn( `callbackEventReceiver :: errorEvent :`, errorEvent );
+					console.warn( `callbackEventReceiver :: [${ channel }] errorEvent :`, errorEvent );
 					return;
 				}
 
-				//console.log( `)) 🔔 Client : received event from server: `, event );
+				console.log( `)) 🔔 Client : received event from server: `, event );
 				//	Client : 🔔 received event from server:  {
 				//       timestamp: 1724273039193,
 				//       serverId: '28c726b7-0acf-4102-bd88-810f5494478c',
@@ -78,7 +79,7 @@ describe( "PubSub", () =>
 				offset : 0,
 				channel : channel,
 				hash : ``,
-				sig : ``
+				sig : ``,
 			};
 			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
 			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
@@ -91,10 +92,16 @@ describe( "PubSub", () =>
 			expect( subscribeResponse ).toHaveProperty( `serverId` );
 			expect( subscribeResponse ).toHaveProperty( `timestamp` );
 			expect( subscribeResponse ).toHaveProperty( `version` );
+			expect( subscribeResponse.status ).toBe( 200 );
 			expect( _.isObject( subscribeResponse.data ) ).toBeTruthy();
 			//	wait 1 second
-			await TestUtil.sleep( 1000 );
+			await TestUtil.sleep( 3000 );
 
+			//	...
+			expect( receivedEvents ).toBeDefined();
+			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
+			expect( receivedEvents.length ).toBeGreaterThanOrEqual( 0 );
+			firstEventLength = receivedEvents.length;
 
 			//
 			//	Alice publish some events to the channel
@@ -128,8 +135,10 @@ describe( "PubSub", () =>
 			//console.log( `receivedEvents :`, receivedEvents );
 			expect( receivedEvents ).toBeDefined();
 			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
-			expect( receivedEvents.length ).toBeGreaterThanOrEqual( 0 );
+			expect( receivedEvents.length ).toBeGreaterThan( 0 );
+			expect( receivedEvents.length ).toBe( firstEventLength + 1 );
 
+			//	...
 			pushClient.close();
 			await TestUtil.sleep( 3000 );
 
