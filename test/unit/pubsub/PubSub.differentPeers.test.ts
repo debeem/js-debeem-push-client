@@ -134,7 +134,15 @@ describe( "PubSub.differentPeers", () =>
 			expect( response ).toHaveProperty( `version` );
 			expect( response ).toHaveProperty( `status` );
 			expect( response ).toHaveProperty( `data` );
+			expect( response.status ).toBe( 200 );
 			expect( _.isObject( response.data ) ).toBeTruthy();
+			expect( response.data ).toHaveProperty( `timestamp` );
+			expect( response.data ).toHaveProperty( `wallet` );
+			expect( response.data ).toHaveProperty( `deviceId` );
+			expect( response.data ).toHaveProperty( `channel` );
+			expect( response.data ).toHaveProperty( `hash` );
+			expect( response.data ).toHaveProperty( `sig` );
+			expect( _.isObject( response.data.body ) ).toBeTruthy();
 			await TestUtil.sleep( 10 );
 
 			await TestUtil.sleep( 1000 );
