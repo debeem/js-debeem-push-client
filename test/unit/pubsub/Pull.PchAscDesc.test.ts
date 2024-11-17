@@ -1,7 +1,6 @@
 import { describe, expect } from '@jest/globals';
 import {
 	PaginationOrder,
-	PublishRequest,
 	PullRequest,
 	PushClient,
 	PushServerResponse,
