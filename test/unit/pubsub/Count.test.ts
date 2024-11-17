@@ -80,6 +80,7 @@ describe( "Count", () =>
 			//	Alice publish some events to the channel
 			//
 			let firstTimestamp = 0;
+			let secondTimestamp = 0;
 			let lastTimestamp = 0;
 			const maxPublishedCount = 20;
 			for ( let i = 0; i < maxPublishedCount; i++ )
@@ -88,6 +89,10 @@ describe( "Count", () =>
 				if ( 0 === i )
 				{
 					firstTimestamp = lastTimestamp;
+				}
+				if ( 1 === i )
+				{
+					secondTimestamp = lastTimestamp;
 				}
 
 				//	...
@@ -101,31 +106,6 @@ describe( "Count", () =>
 					body : {
 						index : i,
 						time : new Date().toLocaleString(),
-						"postHash": "0xf9f3f8687a8a0eaf77827ea007270c6987f9d563fdbf7cb80d8f51f141e8d691",
-						"timestamp": 1731291629673,
-						"hash": "0xc04ce18f621a912b27124865a227edf5f9fae5de06e89ebafc534d6f0132ddb6",
-						"version": "1.0.0",
-						"deleted": "000000000000000000000000",
-						"wallet": "0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8",
-						"sig": "0x03b411ec8b19723e9b86712bd5863b88c35e9f8bed8700f0a850ee4fffad95e5135e1474594a90745c99b93872d0f09044e895e0f10a46317d41b4998735b85e1c",
-						"authorName": "Bob",
-						"authorAvatar": "https://avatars.githubusercontent.com/u/142800322?v=4",
-						"replyTo": "Alice",
-						"replyToWallet": "0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357",
-						"postSnippet": "post name abc",
-						"body": "Hello 1",
-						"pictures": [],
-						"videos": [],
-						"bitcoinPrice": 26888,
-						"statisticView": 0,
-						"statisticRepost": 0,
-						"statisticQuote": 0,
-						"statisticLike": 0,
-						"statisticFavorite": 0,
-						"statisticReply": 0,
-						"remark": "no ...",
-						"createdAt": "2024-11-11T02:20:29.673Z",
-						"updatedAt": "2024-11-11T02:20:29.673Z"
 					}
 
 				};
@@ -176,7 +156,7 @@ describe( "Count", () =>
 			};
 			const countResponse1 : PushServerResponse = await pushClient.count( countRequest1 );
 			//console.log( `countResponse1 :`, countResponse1 );
-			//console.log( `countResponse1.data :`, countResponse1.data );
+			console.log( `countResponse1.data :`, countResponse1.data );
 			//	    countResponse1.data : {
 			//       resultList: [
 			//         {
@@ -200,7 +180,7 @@ describe( "Count", () =>
 				expect( item ).not.toBeNull();
 				expect( _.isObject( item ) ).toBeTruthy();
 				expect( item.channel ).toBe( channel );
-				expect( item.count ).toBeGreaterThanOrEqual( 0 );
+				expect( item.count ).toBeGreaterThanOrEqual( maxPublishedCount );
 				expect( Array.isArray( item.lastElementList ) ).toBeTruthy();
 				//console.log( `item.lastElementList :`, item.lastElementList );
 				//	item.lastElementList : [
@@ -279,6 +259,119 @@ describe( "Count", () =>
 			//	because it returns a maximum of 3 records
 			expect( countResponse2.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
 
+
+
+			//	secondTimestamp
+			//
+			//	count all
+			//
+			const countRequest3 : CountRequest = {
+				options : [
+					{
+						timestamp : new Date().getTime(),
+						wallet : testWalletObjList.bob.address,
+						deviceId : deviceId,
+						channel : channel,
+						startTimestamp: secondTimestamp,
+						endTimestamp: -1,
+						lastElement: 10
+					}
+				]
+			};
+			const countResponse3 : PushServerResponse = await pushClient.count( countRequest3 );
+			//console.log( `countResponse3 :`, countResponse2 );
+			//	    countResponse2.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+			console.log( `countResponse3.data :`, countResponse3.data );
+			//	    countResponse3.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+
+			expect( countResponse3 ).not.toBeNull();
+			expect( countResponse3.data ).not.toBeNull();
+			expect( countResponse3 ).not.toBeNull();
+			expect( countResponse3.data ).not.toBeNull();
+			expect( countResponse3.data.resultList ).not.toBeNull();
+			expect( Array.isArray( countResponse3.data.resultList ) ).toBeTruthy();
+			expect( countResponse3.data.resultList.length ).toBeGreaterThan( 0 );
+			expect( countResponse3.data.resultList[ 0 ].channel ).toBe( channel );
+			expect( countResponse3.data.resultList[ 0 ].count ).toBe( maxPublishedCount - 1 );
+			expect( Array.isArray( countResponse3.data.resultList[ 0 ].lastElementList ) ).toBeTruthy();
+
+			//	because it returns a maximum of 3 records
+			expect( countResponse3.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
+
+
+			//	secondTimestamp
+			//
+			//	count all
+			//
+			const countRequest4 : CountRequest = {
+				options : [
+					{
+						timestamp : new Date().getTime(),
+						wallet : testWalletObjList.bob.address,
+						deviceId : deviceId,
+						channel : channel,
+						startTimestamp: secondTimestamp + 1,
+						endTimestamp: -1,
+						lastElement: 10
+					}
+				]
+			};
+			const countResponse4 : PushServerResponse = await pushClient.count( countRequest4 );
+			//console.log( `countResponse4 :`, countResponse2 );
+			//	    countResponse2.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+			console.log( `countResponse4.data :`, countResponse4.data );
+			//	    countResponse4.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+
+			expect( countResponse4 ).not.toBeNull();
+			expect( countResponse4.data ).not.toBeNull();
+			expect( countResponse4 ).not.toBeNull();
+			expect( countResponse4.data ).not.toBeNull();
+			expect( countResponse4.data.resultList ).not.toBeNull();
+			expect( Array.isArray( countResponse4.data.resultList ) ).toBeTruthy();
+			expect( countResponse4.data.resultList.length ).toBeGreaterThan( 0 );
+			expect( countResponse4.data.resultList[ 0 ].channel ).toBe( channel );
+
+			//	count : -1 : error state
+			expect( countResponse4.data.resultList[ 0 ].count ).toBe( -1 );
+			expect( Array.isArray( countResponse4.data.resultList[ 0 ].lastElementList ) ).toBeTruthy();
+
+			//	because it returns a maximum of 3 records
+			expect( countResponse4.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
+
+
+			//	...
 			pushClient.close();
 			await TestUtil.sleep( 3000 );
 
