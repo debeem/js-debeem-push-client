@@ -7,6 +7,12 @@ import { BaseRequest } from "../BaseRequest";
 export interface CountOptionItem extends BaseRequest
 {
 	/**
+	 *	when an exact search cannot precisely find the specified member,
+	 *	allow searching for the closest one instead
+	 */
+	allowClosestMemberSearch ?: boolean;
+
+	/**
 	 * 	if the user specifies this parameter,
 	 * 	statistics will start from this parameter.
 	 * 	default to 0
