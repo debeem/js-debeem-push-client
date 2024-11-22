@@ -79,13 +79,14 @@ describe( "Count", () =>
 			//
 			//	Alice publish some events to the channel
 			//
+			const launchTimestamp = Date.now();
 			let firstTimestamp = 0;
 			let secondTimestamp = 0;
 			let lastTimestamp = 0;
 			const maxPublishedCount = 20;
 			for ( let i = 0; i < maxPublishedCount; i++ )
 			{
-				lastTimestamp = Date.now();
+				lastTimestamp = launchTimestamp + ( i * 100 );
 				if ( 0 === i )
 				{
 					firstTimestamp = lastTimestamp;
@@ -204,9 +205,8 @@ describe( "Count", () =>
 
 			await TestUtil.sleep( 1000 );
 
-
-			//	startTimestamp
 			//
+			//	firstTimestamp
 			//	count all
 			//
 			const countRequest2 : CountRequest = {
@@ -260,9 +260,8 @@ describe( "Count", () =>
 			expect( countResponse2.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
 
 
-
-			//	secondTimestamp
 			//
+			//	secondTimestamp
 			//	count all
 			//
 			const countRequest3 : CountRequest = {
@@ -315,8 +314,8 @@ describe( "Count", () =>
 			expect( countResponse3.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
 
 
-			//	secondTimestamp
 			//
+			//	secondTimestamp + 1
 			//	count all
 			//
 			const countRequest4 : CountRequest = {
@@ -369,6 +368,127 @@ describe( "Count", () =>
 
 			//	because it returns a maximum of 3 records
 			expect( countResponse4.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
+
+
+			//
+			//	secondTimestamp + 1
+			//	with allowClosestMemberSearch : true,
+			//	count all
+			//
+			const countRequest5 : CountRequest = {
+				options : [
+					{
+						timestamp : new Date().getTime(),
+						wallet : testWalletObjList.bob.address,
+						deviceId : deviceId,
+						channel : channel,
+						allowClosestMemberSearch : true,
+
+						//	timestamp is closer to the second element,
+						//	the second member will be used
+						//	so, the result will be the value of ( `inserted` - 1 )
+						startTimestamp: secondTimestamp + 1,
+						endTimestamp: -1,
+						lastElement: 10
+					}
+				]
+			};
+			const countResponse5 : PushServerResponse = await pushClient.count( countRequest5 );
+			//console.log( `countResponse5 :`, countResponse2 );
+			//	    countResponse5.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+			console.log( `countResponse5.data :`, countResponse5.data );
+			//	    countResponse5.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+
+			expect( countResponse5 ).not.toBeNull();
+			expect( countResponse5.data ).not.toBeNull();
+			expect( countResponse5 ).not.toBeNull();
+			expect( countResponse5.data ).not.toBeNull();
+			expect( countResponse5.data.resultList ).not.toBeNull();
+			expect( Array.isArray( countResponse5.data.resultList ) ).toBeTruthy();
+			expect( countResponse5.data.resultList.length ).toBeGreaterThan( 0 );
+			expect( countResponse5.data.resultList[ 0 ].channel ).toBe( channel );
+
+			expect( countResponse5.data.resultList[ 0 ].count ).toBe( maxPublishedCount - 1 );
+			expect( Array.isArray( countResponse5.data.resultList[ 0 ].lastElementList ) ).toBeTruthy();
+
+			//	because it returns a maximum of 3 records
+			expect( countResponse5.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
+
+
+			//
+			//	secondTimestamp + 90
+			//	count all
+			//
+			const countRequest6 : CountRequest = {
+				options : [
+					{
+						timestamp : new Date().getTime(),
+						wallet : testWalletObjList.bob.address,
+						deviceId : deviceId,
+						channel : channel,
+						allowClosestMemberSearch : true,
+
+						//	timestamp is closer to the third element,
+						//	the third member will be used
+						//	so, the result will be the value of ( `inserted` - 2 )
+						startTimestamp: secondTimestamp + 90,
+						endTimestamp: -1,
+						lastElement: 10
+					}
+				]
+			};
+			const countResponse6 : PushServerResponse = await pushClient.count( countRequest6 );
+			//console.log( `countResponse6 :`, countResponse2 );
+			//	    countResponse6.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+			console.log( `countResponse6.data :`, countResponse6.data );
+			//	    countResponse6.data : {
+			//       resultList: [
+			//         {
+			//           channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
+			//           count: 20,
+			//           lastElementList: [Array]
+			//         }
+			//       ]
+			//     }
+
+			expect( countResponse6 ).not.toBeNull();
+			expect( countResponse6.data ).not.toBeNull();
+			expect( countResponse6 ).not.toBeNull();
+			expect( countResponse6.data ).not.toBeNull();
+			expect( countResponse6.data.resultList ).not.toBeNull();
+			expect( Array.isArray( countResponse6.data.resultList ) ).toBeTruthy();
+			expect( countResponse6.data.resultList.length ).toBeGreaterThan( 0 );
+			expect( countResponse6.data.resultList[ 0 ].channel ).toBe( channel );
+
+			expect( countResponse6.data.resultList[ 0 ].count ).toBe( maxPublishedCount - 2 );
+			expect( Array.isArray( countResponse6.data.resultList[ 0 ].lastElementList ) ).toBeTruthy();
+
+			//	because it returns a maximum of 3 records
+			expect( countResponse6.data.resultList[ 0 ].lastElementList.length ).toBeLessThanOrEqual( 3 );
 
 
 			//	...
