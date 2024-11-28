@@ -1,5 +1,5 @@
 import { describe, expect } from '@jest/globals';
-import { PublishRequest, PushClient, VaPushServerResponse } from "../../../src";
+import { PublishRequest, PushClient, PushServerResponse, SubscribeRequest, VaPushServerResponse } from "../../../src";
 import { Web3Digester, Web3Signer } from "debeem-id";
 import { TestUtil } from "debeem-utils";
 import { testWalletObjList } from "../../../src/configs/TestConfig";
@@ -9,7 +9,7 @@ import _ from "lodash";
 /**
  *	unit test
  */
-describe( "PubSub.differentPeers", () =>
+describe( "Heartbeat", () =>
 {
 	beforeAll( async () =>
 	{
@@ -18,11 +18,10 @@ describe( "PubSub.differentPeers", () =>
 	{
 	});
 
-	describe( "PubSub.differentPeers", () =>
+	describe( "Heartbeat", () =>
 	{
-		it( "should receive events from the P2P broadcast", async () =>
+		it( "should receive event continuously", async () =>
 		{
-			let firstEventLength : number = 0;
 			let receivedEvents: any[] = [];
 
 			/**
@@ -62,16 +61,17 @@ describe( "PubSub.differentPeers", () =>
 			const deviceId = `device-${ testWalletObjList.bob.address }`;
 			const channel = `pch-bobo-${ testWalletObjList.bob.address }`;
 
-			//
-			//	Bob subscribes to the channel on peer 01
-			//
-			const pushClient01 = new PushClient( {
+			const pushClientOptions = {
 				deviceId : deviceId,
-				serverUrl : `http://dev-node01-jpe.metabeem.com:6501`
-				//serverUrl : `http://localhost:6501`
-			} );
-			await pushClient01.waitUntilConnected( 3000 );
+				//serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+				serverUrl : `http://localhost:6501`
+			};
+			const pushClient = new PushClient( pushClientOptions );
+			await pushClient.waitUntilConnected( 3000 );
 
+			//
+			//	Bob subscribes to the channel
+			//
 			let subscribeRequest = {
 				timestamp : new Date().getTime(),
 				wallet : testWalletObjList.bob.address,
@@ -81,11 +81,10 @@ describe( "PubSub.differentPeers", () =>
 				channel : channel,
 				hash : ``,
 				sig : ``,
-				skipAutoPullingData: true,
 			};
 			subscribeRequest.sig = await Web3Signer.signObject( testWalletObjList.bob.privateKey, subscribeRequest );
 			subscribeRequest.hash = await Web3Digester.hashObject( subscribeRequest );
-			const subscribeResponse = await pushClient01.subscribe( subscribeRequest, callbackEventReceiver );
+			const subscribeResponse = await pushClient.subscribe( subscribeRequest, callbackEventReceiver );
 			//console.log( `Client : 🐹 server response of the subscription request: `, subscribeResponse );
 			//expect( subscribeResponse && 200 === subscribeResponse.status ).toBeTruthy();
 			expect( subscribeResponse ).toBeDefined();
@@ -103,20 +102,12 @@ describe( "PubSub.differentPeers", () =>
 			expect( receivedEvents ).toBeDefined();
 			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
 			expect( receivedEvents.length ).toBeGreaterThanOrEqual( 0 );
-			firstEventLength = receivedEvents.length;
-
+			const firstEventLength : number = receivedEvents.length;
 
 			//
-			//	Alice will publish an event to the channel on peer 02
+			//	Alice publish some events to the channel
 			//
-			const pushClient02 = new PushClient( {
-				deviceId : deviceId,
-				serverUrl : `http://dev-node02-jpe.metabeem.com:6501`
-				// serverUrl : `http://localhost:6511`
-			} );
-			await pushClient02.waitUntilConnected( 3000 );
-
-			let publishRequest : PublishRequest = {
+			let publishRequest1 : PublishRequest = {
 				timestamp : new Date().getTime(),
 				wallet : testWalletObjList.alice.address,
 				deviceId : ``,
@@ -124,65 +115,71 @@ describe( "PubSub.differentPeers", () =>
 				hash : ``,
 				sig : ``,
 				body : {
-					index : 10010,
+					index : 0,
 					time : new Date().toLocaleString()
 				}
 			};
-			publishRequest.sig = await Web3Signer.signObject( testWalletObjList.alice.privateKey, publishRequest );
-			publishRequest.hash = await Web3Digester.hashObject( publishRequest );
-			const response = await pushClient02.publish( publishRequest );
-			console.log( `Client : server response of the publish request: `, response );
-			expect( response ).toBeDefined();
-			expect( response ).toHaveProperty( `timestamp` );
-			expect( response ).toHaveProperty( `serverId` );
-			expect( response ).toHaveProperty( `version` );
-			expect( response ).toHaveProperty( `status` );
-			expect( response ).toHaveProperty( `data` );
-			expect( response.status ).toBe( 200 );
-			expect( _.isObject( response.data ) ).toBeTruthy();
-			expect( response.data ).toHaveProperty( `timestamp` );
-			expect( response.data ).toHaveProperty( `wallet` );
-			expect( response.data ).toHaveProperty( `deviceId` );
-			expect( response.data ).toHaveProperty( `channel` );
-			expect( response.data ).toHaveProperty( `hash` );
-			expect( response.data ).toHaveProperty( `sig` );
-			expect( _.isObject( response.data.body ) ).toBeTruthy();
-			await TestUtil.sleep( 10 );
-
+			publishRequest1.sig = await Web3Signer.signObject( testWalletObjList.alice.privateKey, publishRequest1 );
+			publishRequest1.hash = await Web3Digester.hashObject( publishRequest1 );
+			const response1 = await pushClient.publish( publishRequest1 );
+			console.log( `Client : server response of the publish request: `, response1 );
+			expect( response1 ).toBeDefined();
+			expect( response1 ).toHaveProperty( `timestamp` );
+			expect( response1 ).toHaveProperty( `serverId` );
+			expect( response1 ).toHaveProperty( `version` );
+			expect( response1 ).toHaveProperty( `status` );
+			expect( response1 ).toHaveProperty( `data` );
+			expect( _.isObject( response1.data ) ).toBeTruthy();
 			await TestUtil.sleep( 1000 );
+
 			//console.log( `receivedEvents :`, receivedEvents );
 			expect( receivedEvents ).toBeDefined();
 			expect( Array.isArray( receivedEvents ) ).toBeTruthy();
 			expect( receivedEvents.length ).toBeGreaterThan( 0 );
 			expect( receivedEvents.length ).toBe( firstEventLength + 1 );
 
-			const lastEvent = receivedEvents[ receivedEvents.length - 1 ];
-			console.log( `lastEvent :`, lastEvent );
-			//    lastEvent : {
-			//       timestamp: 1731604176618,
-			//       serverId: '6c03895c-d8e1-4c10-8e8a-644253799e1e',
-			//       version: '1.0.0',
-			//       status: 200,
-			//       data: {
-			//         timestamp: 1731604176618,
-			//         wallet: '0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357',
-			//         deviceId: '',
-			//         channel: 'pch-bobo-0xcbb8f66676737f0423bdda7bb1d8b84fc3c257e8',
-			//         hash: '0x84c8ea463de61724869e7150170136060ea063fb94fb01fc1e3d52618e1d8f39',
-			//         sig: '0x0b2c8f586730a7122a0913671b53291aa783c0c650fd038148b80d8b1de49f885318915dce1f350f679750b1b260ca80f797f8a3521049c0fd9d226598f7adcb1c',
-			//         body: { index: 10010, time: '11/15/2024, 1:09:36 AM' }
-			//       }
-			//     }
-			expect( lastEvent ).toBeDefined();
-			expect( lastEvent ).toHaveProperty( `data` );
-			expect( _.isObject( lastEvent.data ) ).toBeTruthy();
-			expect( _.isObject( lastEvent.data.body ) ).toBeTruthy();
-			expect( lastEvent.data.body.index ).toBe( 10010 );
+			await TestUtil.sleep( 60 * 1000 );
 
 			//	...
-			pushClient01.close();
-			await TestUtil.sleep( 3000 );
+			const secondEventLength = receivedEvents.length;
 
-		}, 25000 );
+			//
+			//	Alice publish some events to the channel
+			//
+			let publishRequest2 : PublishRequest = {
+				timestamp : new Date().getTime(),
+				wallet : testWalletObjList.alice.address,
+				deviceId : ``,
+				channel : channel,
+				hash : ``,
+				sig : ``,
+				body : {
+					index : 0,
+					time : new Date().toLocaleString()
+				}
+			};
+			publishRequest2.sig = await Web3Signer.signObject( testWalletObjList.alice.privateKey, publishRequest2 );
+			publishRequest2.hash = await Web3Digester.hashObject( publishRequest2 );
+			const response2 = await pushClient.publish( publishRequest2 );
+			console.log( `Client : server response of the publish request: `, response2 );
+			expect( response2 ).toBeDefined();
+			expect( response2 ).toHaveProperty( `timestamp` );
+			expect( response2 ).toHaveProperty( `serverId` );
+			expect( response2 ).toHaveProperty( `version` );
+			expect( response2 ).toHaveProperty( `status` );
+			expect( response2 ).toHaveProperty( `data` );
+			expect( _.isObject( response2.data ) ).toBeTruthy();
+			await TestUtil.sleep( 1000 );
+
+			//console.log( `receivedEvents :`, receivedEvents );
+			expect( receivedEvents.length ).toBe( secondEventLength + 1 );
+
+			//	...
+			await TestUtil.sleep( 60 * 1000 );
+			pushClient.close();
+
+
+		}, 120 * 10e3 );
 	} );
+
 } );

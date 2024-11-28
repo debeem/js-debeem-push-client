@@ -31,6 +31,7 @@ describe( "Pub", () =>
 				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
+			await pushClient.waitUntilConnected( 3000 );
 
 			//
 			//	Alice publish some events to the channel

@@ -59,6 +59,7 @@ async function subscribe()
 		serverUrl : `http://localhost:6501`
 	};
 	const pushClient = new PushClient( pushClientOptions );
+	await pushClient.waitUntilConnected( 3000 );
 
 
 	//

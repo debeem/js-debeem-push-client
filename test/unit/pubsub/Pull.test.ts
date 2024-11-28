@@ -37,6 +37,7 @@ describe( "Pull", () =>
 				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
+			await pushClient.waitUntilConnected( 3000 );
 
 			let receivedEvents: any[] = [];
 

@@ -27,12 +27,17 @@ export class WebsocketConnector implements IConnector
 	/**
 	 * 	push client options
 	 */
-	options !: ConnectorOptions;
+	options ! : ConnectorOptions;
 
 	/**
 	 * 	client socket
 	 */
 	socket ! : Socket;
+
+	/**
+	 * 	hello interval
+	 */
+	helloInterval : any;
 
 	/**
 	 *	log
@@ -44,10 +49,36 @@ export class WebsocketConnector implements IConnector
 	{
 		//	...
 		this.options = options;
-		this.socket = SocketClient( this.options.serverUrl );
+		this.socket = SocketClient( this.options.serverUrl, {
+			/**
+			 * 	should we allow reconnections?
+			 */
+			reconnection : true,
+
+			/**
+			 * 	how many reconnection attempts should we try?
+			 */
+			reconnectionAttempts : Infinity,
+
+			/**
+			 * 	the time delay in milliseconds between reconnection attempts
+			 */
+			reconnectionDelay : 1000,
+
+			/**
+			 * 	the max time delay in milliseconds between reconnection attempts
+			 */
+			reconnectionDelayMax : 3000,
+
+			/**
+			 * 	the timeout in milliseconds for our connection attempt
+			 */
+			timeout : 10 * 1000
+		} );
 
 		//	...
 		this.setupEvents();
+		//this.setupHelloThread();
 	}
 
 	/**
@@ -75,13 +106,52 @@ export class WebsocketConnector implements IConnector
 		} );
 		this.socket.on( `disconnect`, ( reason ) =>
 		{
-			this.log.debug( `${ this.constructor.name }.setupEvents on[disconnect] :: disconnected from server, socket.id :`, this.socket.id );
+			/**
+			 * 	https://socket.io/docs/v4/client-socket-instance/#disconnect
+			 *
+			 * 	io server disconnect
+			 *	The server has forcefully disconnected the socket with socket.disconnect()
+			 *	(do not auto reconnection)
+			 *
+			 * 	io client disconnect
+			 * 	The socket was manually disconnected using socket.disconnect()
+			 * 	(do not auto reconnection)
+			 *
+			 * 	ping timeout
+			 * 	The server did not send a PING within the pingInterval + pingTimeout range
+			 * 	(will auto reconnection)
+			 *
+			 * 	transport close
+			 * 	The connection was closed (example: the user has lost connection, or the network was changed from WiFi to 4G)
+			 * 	(will auto reconnection)
+			 *
+			 * 	transport error
+			 * 	The connection has encountered an error (example: the server was killed during a HTTP long-polling cycle)
+			 * 	(will auto reconnection)
+			 */
+			this.log.debug( `${ this.constructor.name }.setupEvents on[disconnect] :: disconnected from server, socket.id: ${ this.socket.id }, reason: ${ reason }` );
 			if ( `io server disconnect` === reason )
 			{
-				//	the disconnection was initiated by the server, you need to reconnect manually
+				/**
+				 * 	the server has forcefully disconnected the socket with socket.disconnect()
+				 * 	try to reconnect manually
+				 */
 				this.socket.connect();
 			}
 		} );
+		this.socket.on( "reconnect", ( attemptNumber ) =>
+		{
+			this.log.debug( `${ this.constructor.name }.setupEvents on[reconnect] :: reconnected successfully after ${ attemptNumber } attempts.` );
+		} );
+		this.socket.on( "reconnect_attempt", ( attemptNumber ) =>
+		{
+			this.log.debug( `${ this.constructor.name }.setupEvents on[reconnect_attempt] :: attempting to reconnect... Attempt #${ attemptNumber }` );
+		} );
+		this.socket.on( "reconnect_failed", () =>
+		{
+			this.log.error( `${ this.constructor.name }.setupEvents on[reconnect_failed] :: reconnection failed. Please check your network.` );
+		} );
+
 		// this.socket.on( `message`, ( serverId : string, roomId : string, message : any ) =>
 		// {
 		// 	console.log( `message from server: ${ serverId }, roomId: ${ roomId }, `, message );
@@ -145,6 +215,75 @@ export class WebsocketConnector implements IConnector
 	}
 
 	/**
+	 * 	hello thread
+	 *	@private
+	 */
+	private setupHelloThread()
+	{
+		if ( this.helloInterval )
+		{
+			clearInterval( this.helloInterval );
+			this.helloInterval = null;
+		}
+		this.helloInterval = setInterval( async () =>
+		{
+			if ( ! this.socket.connected )
+			{
+				this.log.debug( `${ this.constructor.name }.helloThread :: not connected to server` );
+				return;
+			}
+
+			this.log.debug( `${ this.constructor.name }.helloThread :: will send Hello to server` );
+			const response = await this.send( `hello`, Date.now().toString() );
+			this.log.debug( `${ this.constructor.name }.helloThread :: response : ${ JSON.stringify( response ) }` );
+
+		}, 10 * 1000 );
+	}
+
+	/**
+	 * 	wait until the client connected to server successfully
+	 *
+	 * 	@implements
+	 *	@param timeout	{number} timeout in milliseconds
+	 *	@returns {Promise< void >}
+	 */
+	public waitUntilConnected( timeout : number ) : Promise<void>
+	{
+		return new Promise( async ( resolve, reject ) =>
+		{
+			try
+			{
+				if ( ! _.isNumber( timeout ) || timeout <= 0 )
+				{
+					return reject( `${ this.constructor.name }.waitUntilConnected :: invalid timeout` );
+				}
+
+				const pollInterval = 100;
+				let elapsed = 0;
+				const intervalId = setInterval( () =>
+				{
+					if ( this.socket.connected )
+					{
+						clearInterval( intervalId );
+						resolve();
+					}
+					else if ( elapsed >= timeout )
+					{
+						clearInterval( intervalId );
+						return reject( `${ this.constructor.name }.waitUntilConnected :: timeout, socket did not connect within ${ timeout }ms` );
+					}
+					elapsed += pollInterval;
+
+				}, pollInterval );
+			}
+			catch ( err )
+			{
+				reject( err );
+			}
+		} );
+	}
+
+	/**
 	 * 	close the connection to server
 	 */
 	public close()
@@ -160,7 +299,7 @@ export class WebsocketConnector implements IConnector
 	 *	@param publishRequest	{PublishRequest}
 	 *	@returns {Promise< PushServerResponse >}
 	 */
-	public publish( publishRequest : PublishRequest ) : Promise< PushServerResponse >
+	public publish( publishRequest : PublishRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -180,7 +319,7 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -188,7 +327,7 @@ export class WebsocketConnector implements IConnector
 	 *	@param subscribeRequest		{SubscribeRequest}
 	 *	@returns {Promise< PushServerResponse >}
 	 */
-	public subscribe( subscribeRequest : SubscribeRequest ) : Promise< PushServerResponse >
+	public subscribe( subscribeRequest : SubscribeRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -208,7 +347,7 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -216,7 +355,7 @@ export class WebsocketConnector implements IConnector
 	 *	@param unsubscribeRequest	{UnsubscribeRequest}
 	 *	@returns {Promise< PushServerResponse >}
 	 */
-	public unsubscribe( unsubscribeRequest : UnsubscribeRequest ) : Promise< PushServerResponse >
+	public unsubscribe( unsubscribeRequest : UnsubscribeRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -236,7 +375,7 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -244,7 +383,7 @@ export class WebsocketConnector implements IConnector
 	 *	@param statusRequest	{StatusRequest}
 	 *	@returns {Promise< PushServerResponse >}
 	 */
-	status( statusRequest : StatusRequest ) : Promise< PushServerResponse >
+	status( statusRequest : StatusRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -264,7 +403,7 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -272,7 +411,7 @@ export class WebsocketConnector implements IConnector
 	 *	@param pullRequest	{PullRequest}
 	 *	@returns {Promise< PushServerResponse >}
 	 */
-	public pull( pullRequest : PullRequest ) : Promise< PushServerResponse >
+	public pull( pullRequest : PullRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -292,7 +431,7 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -300,7 +439,7 @@ export class WebsocketConnector implements IConnector
 	 *	@param countRequest	{CountRequest}
 	 *	@returns {Promise< PushServerResponse >}
 	 */
-	public count( countRequest : CountRequest ) : Promise< PushServerResponse >
+	public count( countRequest : CountRequest ) : Promise<PushServerResponse>
 	{
 		return new Promise( async ( resolve, reject ) =>
 		{
@@ -320,7 +459,7 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 
 	/**
@@ -337,6 +476,15 @@ export class WebsocketConnector implements IConnector
 		{
 			try
 			{
+				// if ( ! this.socket.connected )
+				// {
+				// 	// this.socket.once(`connect`, async () =>
+				// 	// {
+				// 	// 	const response = await this.send( eventName, arg );
+				// 	// });
+				// 	return reject( `${ this.constructor.name }.send :: do not connected to server, failed to send event : ${ eventName }, arg: ${ arg }` );
+				// }
+
 				/**
 				 * 	@description
 				 * 	https://socket.io/docs/v4/
@@ -371,6 +519,6 @@ export class WebsocketConnector implements IConnector
 			{
 				reject( err );
 			}
-		});
+		} );
 	}
 }

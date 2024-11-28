@@ -22,6 +22,11 @@ export interface ConnectorMap
 export interface IConnector
 {
 	/**
+	 * 	wait until the client connected to server successfully
+	 */
+	waitUntilConnected( timeout : number ) : Promise<void>;
+
+	/**
 	 *	close the connection to server
 	 */
 	close() : void;

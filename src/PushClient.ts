@@ -84,6 +84,18 @@ export class PushClient
 	}
 
 	/**
+	 * 	wait until the client connected to server successfully
+	 *
+	 * 	@implements
+	 *	@param timeout	{number} timeout in milliseconds
+	 *	@returns {Promise< void >}
+	 */
+	public waitUntilConnected( timeout : number ) : Promise<void>
+	{
+		return this.currentConnector.waitUntilConnected( timeout );
+	}
+
+	/**
 	 * 	close the connection to server
 	 */
 	public close()
