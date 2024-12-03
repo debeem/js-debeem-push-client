@@ -10,7 +10,6 @@ import {
 	defaultPushClientMinOffset,
 	PushClientOffsetItem
 } from "../entities/PushClientEntity";
-import { clearInterval } from "timers";
 import { Logger, LoggerUtil } from "../utils/LoggerUtil";
 import { VaChannel } from "../validators/VaChannel";
 import { IServerEventReceiver } from "../models/callbacks/ServerEventReceiver";

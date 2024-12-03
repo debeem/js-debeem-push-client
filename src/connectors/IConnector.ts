@@ -6,6 +6,7 @@ import { PullRequest } from "../models/requests/PullRequest";
 import { StatusRequest } from "../models/requests/StatusRequest";
 import { WebsocketConnector } from "./impls/websocket/WebsocketConnector";
 import { CountRequest } from "../models/requests/CountRequest";
+import { CallbackNetworkStatusListener } from "../models/callbacks/NetworkStatusListener";
 
 
 /**
@@ -21,6 +22,11 @@ export interface ConnectorMap
  */
 export interface IConnector
 {
+	/**
+	 *	set up a callback function to listen for the network status changes
+	 */
+	setNetworkStatusListener( callback : CallbackNetworkStatusListener ) : void;
+
 	/**
 	 * 	wait until the client connected to server successfully
 	 */

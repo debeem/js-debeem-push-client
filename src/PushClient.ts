@@ -15,6 +15,7 @@ import { PullRequest } from "./models/requests/PullRequest";
 import { PushClientOffsetItem } from "./entities/PushClientEntity";
 import { CountRequest } from "./models/requests/CountRequest";
 import _ from "lodash";
+import { CallbackNetworkStatusListener } from "./models/callbacks/NetworkStatusListener";
 
 
 /**
@@ -30,18 +31,18 @@ export class PushClient
 	/**
 	 * 	event pool
 	 */
-	public eventPool !: EventPool;
+	public eventPool ! : EventPool;
 
 	/**
 	 * 	services
 	 */
-	protected syncService !: SyncService;
+	protected syncService ! : SyncService;
 
 	/**
 	 * 	connectors
 	 */
-	protected connectorMap !: ConnectorMap;
-	protected currentConnector !: IConnector;
+	protected connectorMap ! : ConnectorMap;
+	protected currentConnector ! : IConnector;
 
 
 	/**
@@ -54,9 +55,9 @@ export class PushClient
 		/**
 		 * 	create event pool
 		 */
-		this.eventPool = new EventPool({
+		this.eventPool = new EventPool( {
 			maxSize : defaultEventPoolSize,
-		});
+		} );
 
 		/**
 		 * 	create services
@@ -67,10 +68,10 @@ export class PushClient
 		 * 	create connectors
 		 */
 		this.connectorMap = {
-			ws : new WebsocketConnector({
+			ws : new WebsocketConnector( {
 				...this.options,
 				serverEventReceiver : this.eventPool.serverEventReceiver
-			})
+			} )
 		};
 		if ( ServerUrlUtil.isWebsocket( this.options.serverUrl ) )
 		{
@@ -79,7 +80,7 @@ export class PushClient
 		}
 		if ( ! this.currentConnector )
 		{
-			throw new Error( `empty connector` );
+			throw `${ this.constructor.name }.constructor :: empty connector`;
 		}
 	}
 
@@ -104,6 +105,17 @@ export class PushClient
 		{
 			this.currentConnector.close();
 		}
+	}
+
+	/**
+	 *	set up a callback function to listen for the network status changes
+	 *
+	 * 	@param callback		{CallbackNetworkStatusListener}
+	 * 	@returns { void }
+	 */
+	public setNetworkStatusListener( callback : CallbackNetworkStatusListener ) : void
+	{
+		this.currentConnector.setNetworkStatusListener( callback );
 	}
 
 	/**

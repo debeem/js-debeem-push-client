@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Page for NPM Package</title>
+  <link rel="icon" href="data:,">
+</head>
+<body>
+<h1>[debeem-push-client] NetworkStatusListener Testing page</h1>
+<hr>
+<p style="font-size:20px;color:blue;">
+  Please open the <span style="font-size: 24px;"><i>Console</i></span> to see if the output is normal.
+  <p>
+  1, Try disconnecting your network, and you should receive events indicating changes in network status, such as `offline`, `disconnect`, and `connect_error`.
+  </p>
+  <p>
+  2, Reconnect your network, and you should receive a `online` event indicating a change in network status to online.
+  </p>
+  <hr />
+</p>
+<script type="module" src="dist/bundle.js"></script>
+</body>
+</html>

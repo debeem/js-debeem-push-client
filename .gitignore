@@ -4,6 +4,7 @@
 /coverage
 .DS_Store
 
+/test/browser/networkStatus/package-lock.json
 
 
 # Logs

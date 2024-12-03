@@ -17,6 +17,7 @@ import { VaPullRequest } from "../../../validators/requests/VaPullRequest";
 import { LoggerUtil, Logger } from "../../../utils/LoggerUtil";
 import { CountRequest } from "../../../models/requests/CountRequest";
 import { VaCountRequest } from "../../../validators/requests/VaCountRequest";
+import { CallbackNetworkStatusListener } from "../../../models/callbacks/NetworkStatusListener";
 
 
 /**
@@ -38,6 +39,11 @@ export class WebsocketConnector implements IConnector
 	 * 	hello interval
 	 */
 	helloInterval : any;
+
+	/**
+	 * 	network status listener
+	 */
+	callbackNetworkStatusListener ! : CallbackNetworkStatusListener;
 
 	/**
 	 *	log
@@ -95,16 +101,47 @@ export class WebsocketConnector implements IConnector
 		{
 			//	x8WIv7-mJelg7on_ALbx
 			this.log.debug( `${ this.constructor.name }.setupEvents on[connect] :: connected to server, socket.id :`, this.socket.id );
-		} );
-		this.socket.on( `connect_error`, () =>
-		{
-			this.log.debug( `${ this.constructor.name }.setupEvents on[connect_error] :: connect error, will reconnect later ...` )
-			setTimeout( () =>
+
+			/**
+			 * 	callback network status information
+			 */
+			if ( _.isFunction( this.callbackNetworkStatusListener ) )
 			{
-				this.socket.connect();
-			}, 1000 );
+				this.callbackNetworkStatusListener( `connect`, { socket : this.socket } );
+			}
 		} );
-		this.socket.on( `disconnect`, ( reason ) =>
+		this.socket.on( `connect_error`, ( error ) =>
+		{
+			this.log.debug( `${ this.constructor.name }.setupEvents on[connect_error] :: connect error, will reconnect later ...` );
+			if ( this.socket.active )
+			{
+				//	temporary failure, the socket will automatically try to reconnect
+			}
+			else
+			{
+				//	the connection was denied by the server
+				//	in that case, `socket.connect()` must be manually called in order to reconnect
+				this.log.error( `${ this.constructor.name }.setupEvents on[connect_error] :: connect error, denied by the server : ${ error?.message }` );
+				setTimeout( () =>
+				{
+					this.socket.connect();
+
+				}, 1000 );
+			}
+
+			/**
+			 * 	callback network status information
+			 */
+			if ( _.isFunction( this.callbackNetworkStatusListener ) )
+			{
+				this.callbackNetworkStatusListener( `connect_error`, {
+					socket : this.socket,
+					active : this.socket.active,
+					error : error,
+				} );
+			}
+		} );
+		this.socket.on( `disconnect`, ( reason, details ) =>
 		{
 			/**
 			 * 	https://socket.io/docs/v4/client-socket-instance/#disconnect
@@ -130,13 +167,37 @@ export class WebsocketConnector implements IConnector
 			 * 	(will auto reconnection)
 			 */
 			this.log.debug( `${ this.constructor.name }.setupEvents on[disconnect] :: disconnected from server, socket.id: ${ this.socket.id }, reason: ${ reason }` );
-			if ( `io server disconnect` === reason )
+			if ( this.socket.active )
 			{
-				/**
-				 * 	the server has forcefully disconnected the socket with socket.disconnect()
-				 * 	try to reconnect manually
-				 */
-				this.socket.connect();
+				//	temporary disconnection, the socket will automatically try to reconnect
+			}
+			else
+			{
+				//	the connection was forcefully closed by the server or the client itself
+				//	in that case, `socket.connect()` must be manually called in order to reconnect
+				this.log.debug( `${ this.constructor.name }.setupEvents on[disconnect] :: disconnected from server, forcefully closed by server or client itself, reason: ${ reason }` );
+				console.warn( details );
+				if ( `io server disconnect` === reason )
+				{
+					/**
+					 * 	the server has forcefully disconnected the socket with socket.disconnect()
+					 * 	try to reconnect manually
+					 */
+					this.socket.connect();
+				}
+			}
+
+			/**
+			 * 	callback network status information
+			 */
+			if ( _.isFunction( this.callbackNetworkStatusListener ) )
+			{
+				this.callbackNetworkStatusListener( `disconnect`, {
+					socket : this.socket,
+					active : this.socket.active,
+					reason : reason,
+					details : details,
+				} );
 			}
 		} );
 		this.socket.on( "reconnect", ( attemptNumber ) =>
@@ -238,6 +299,43 @@ export class WebsocketConnector implements IConnector
 			this.log.debug( `${ this.constructor.name }.helloThread :: response : ${ JSON.stringify( response ) }` );
 
 		}, 10 * 1000 );
+	}
+
+	/**
+	 *	set up a callback function to listen for the network status changes
+	 *
+	 * 	@implements
+	 * 	@param callback		{CallbackNetworkStatusListener}
+	 * 	@returns { void }
+	 */
+	public setNetworkStatusListener( callback : CallbackNetworkStatusListener ) : void
+	{
+		if ( ! _.isFunction( callback ) )
+		{
+			throw `${ this.constructor.name }.setNetworkStatusListener :: invalid callback`;
+		}
+
+		/**
+		 * 	will send network status changes about Websocket connections
+		 */
+		this.callbackNetworkStatusListener = callback;
+
+		/**
+		 * 	will set online/offline status
+		 */
+		if ( `undefined` !== typeof window && `undefined` !== typeof document )
+		{
+			window.addEventListener( `offline`, ( event ) =>
+			{
+				this.log.debug( `${ this.constructor.name }.setNetworkStatusListener :: offline, no network connection` );
+				this.callbackNetworkStatusListener( `offline`, { event : event } );
+			} );
+			window.addEventListener( `online`, ( event ) =>
+			{
+				this.log.debug( `${ this.constructor.name }.setNetworkStatusListener :: online, network connected` );
+				this.callbackNetworkStatusListener( `online`, { event : event } );
+			} );
+		}
 	}
 
 	/**

@@ -49,6 +49,6 @@ export interface ConnectorOptions extends PushClientOptions
 	/**
 	 * 	callback function for receiving event from server
 	 */
-	serverEventReceiver : CallbackServerEventReceiver
+	serverEventReceiver : CallbackServerEventReceiver;
 }
 

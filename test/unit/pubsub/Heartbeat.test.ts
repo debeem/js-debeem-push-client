@@ -63,8 +63,8 @@ describe( "Heartbeat", () =>
 
 			const pushClientOptions = {
 				deviceId : deviceId,
-				//serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
-				serverUrl : `http://localhost:6501`
+				serverUrl : `http://dev-node0${ Math.random() < 0.5 ? 1 : 2 }-jpe.metabeem.com:6501`
+				//serverUrl : `http://localhost:6501`
 			};
 			const pushClient = new PushClient( pushClientOptions );
 			await pushClient.waitUntilConnected( 3000 );
