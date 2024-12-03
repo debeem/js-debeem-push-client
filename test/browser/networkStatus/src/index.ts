@@ -1,11 +1,11 @@
-import { PushClient, VaPushServerResponse } from "debeem-push-client";
+import { PushClient } from "debeem-push-client";
 import { testWalletObjList } from "../../../../src/configs/TestConfig";
 import { CallbackNetworkStatusListener } from "../../../../src/models/callbacks/NetworkStatusListener";
 import { TestUtil } from "debeem-utils";
 
 
 
-async function createPushClient( pinCode : string = `` ) : Promise<any>
+async function createPushClient() : Promise<any>
 {
 	return new Promise( async ( resolve, reject ) =>
 	{

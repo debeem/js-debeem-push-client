@@ -27,9 +27,9 @@ describe( "Heartbeat", () =>
 			/**
 			 *	@param channel		{string}
 			 *	@param event		{any}
-			 *	@param callback		{( ack : any ) => void}
+			 *	@param _callback		{( ack : any ) => void}
 			 */
-			const callbackEventReceiver = ( channel : string, event: any, callback: any ) =>
+			const callbackEventReceiver = ( channel : string, event: any, _callback: any ) =>
 			{
 				const errorEvent = VaPushServerResponse.validatePushServerResponse( event );
 				if ( null !== errorEvent )

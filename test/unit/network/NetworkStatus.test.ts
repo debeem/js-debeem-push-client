@@ -1,5 +1,5 @@
 import { describe, expect } from '@jest/globals';
-import { PushClient, VaPushServerResponse } from "../../../src";
+import { PushClient } from "../../../src";
 import { TestUtil } from "debeem-utils";
 import { testWalletObjList } from "../../../src/configs/TestConfig";
 import _ from "lodash";
